@@ -185,6 +185,15 @@ commensurate.t2e <- function(
     cenf <- (obs.time.EC>last.sub.E)
     data.EC[cenf,1] <- data.EC[cenf,1]-(obs.time.EC[cenf]-last.sub.E)
 
+    censor.CT <- censor.CT[data.CT[,1]>0]
+    data.CT   <- data.CT[data.CT[,1]>0,]
+
+    censor.CC <- censor.CC[data.CC[,1]>0]
+    data.CC   <- data.CC[data.CC[,1]>0,]
+
+    censor.EC <- censor.EC[data.EC[,1]>0]
+    data.EC   <- data.EC[data.EC[,1]>0,]
+
     for(i in 1:nmethod){
 
       if(method[[i]]$prior=="noborrow"){

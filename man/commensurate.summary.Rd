@@ -9,7 +9,7 @@ commensurate.summary(simres,method.lab,t.theta)
 \arguments{
 \item{simres}{List of simulation results, including reject and theta.}
 
-\item{method.lab}{List of information borrowing method.}
+\item{method.lab}{Label of information borrowing method.}
 
 \item{t.theta}{True value of treatment effect.}
 }
