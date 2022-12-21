@@ -190,137 +190,265 @@ commensurate.t2e <- function(
 
     for(i in 1:nmethod){
 
-      if(method[[i]]$prior=="noborrow"){
+      if(sum(censor.CC==1)>0){
 
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nCC_c = sum(censor.CC==1),
-          p     = ncov,
-          yCT_o = data.CT[censor.CT==0,1],
-          yCT_c = data.CT[censor.CT==1,1],
-          yCC_o = data.CC[censor.CC==0,1],
-          yCC_c = data.CC[censor.CC==1,1],
-          xCT_o = data.CT[censor.CT==0,-1],
-          xCT_c = data.CT[censor.CT==1,-1],
-          xCC_o = data.CC[censor.CC==0,-1],
-          xCC_c = data.CC[censor.CC==1,-1])
+        if(method[[i]]$prior=="noborrow"){
 
-        mcmc <- rstan::sampling(stanmodels$T2ENoborrow,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nCC_c = sum(censor.CC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yCC_c = data.CC[censor.CC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xCC_c = data.CC[censor.CC==1,-1])
 
-      }else if(method[[i]]$prior=="fullborrow"){
+          mcmc <- rstan::sampling(stanmodels$T2ENoborrow,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
 
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nCC_c = sum(censor.CC==1),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = data.CT[censor.CT==0,1],
-          yCT_c = data.CT[censor.CT==1,1],
-          yCC_o = data.CC[censor.CC==0,1],
-          yCC_c = data.CC[censor.CC==1,1],
-          yEC_o = data.EC[censor.EC==0,1],
-          yEC_c = data.EC[censor.EC==1,1],
-          xCT_o = data.CT[censor.CT==0,-1],
-          xCT_c = data.CT[censor.CT==1,-1],
-          xCC_o = data.CC[censor.CC==0,-1],
-          xCC_c = data.CC[censor.CC==1,-1],
-          xEC_o = data.EC[censor.EC==0,-1],
-          xEC_c = data.EC[censor.EC==1,-1])
+        }else if(method[[i]]$prior=="fullborrow"){
 
-        mcmc <- rstan::sampling(stanmodels$T2EFullborrow,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nCC_c = sum(censor.CC==1),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yCC_c = data.CC[censor.CC==1,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xCC_c = data.CC[censor.CC==1,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1])
 
-      }else if(method[[i]]$prior=="cauchy"){
+          mcmc <- rstan::sampling(stanmodels$T2EFullborrow,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
 
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nCC_c = sum(censor.CC==1),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = data.CT[censor.CT==0,1],
-          yCT_c = data.CT[censor.CT==1,1],
-          yCC_o = data.CC[censor.CC==0,1],
-          yCC_c = data.CC[censor.CC==1,1],
-          yEC_o = data.EC[censor.EC==0,1],
-          yEC_c = data.EC[censor.EC==1,1],
-          xCT_o = data.CT[censor.CT==0,-1],
-          xCT_c = data.CT[censor.CT==1,-1],
-          xCC_o = data.CC[censor.CC==0,-1],
-          xCC_c = data.CC[censor.CC==1,-1],
-          xEC_o = data.EC[censor.EC==0,-1],
-          xEC_c = data.EC[censor.EC==1,-1],
-          scale = method[[i]]$scale)
+        }else if(method[[i]]$prior=="cauchy"){
 
-        mcmc <- rstan::sampling(stanmodels$T2ECauchy,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nCC_c = sum(censor.CC==1),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yCC_c = data.CC[censor.CC==1,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xCC_c = data.CC[censor.CC==1,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1],
+            scale = method[[i]]$scale)
 
-      }else if(method[[i]]$prior=="normal"){
+          mcmc <- rstan::sampling(stanmodels$T2ECauchy,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
 
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nCC_c = sum(censor.CC==1),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = data.CT[censor.CT==0,1],
-          yCT_c = data.CT[censor.CT==1,1],
-          yCC_o = data.CC[censor.CC==0,1],
-          yCC_c = data.CC[censor.CC==1,1],
-          yEC_o = data.EC[censor.EC==0,1],
-          yEC_c = data.EC[censor.EC==1,1],
-          xCT_o = data.CT[censor.CT==0,-1],
-          xCT_c = data.CT[censor.CT==1,-1],
-          xCC_o = data.CC[censor.CC==0,-1],
-          xCC_c = data.CC[censor.CC==1,-1],
-          xEC_o = data.EC[censor.EC==0,-1],
-          xEC_c = data.EC[censor.EC==1,-1],
-          scale = method[[i]]$scale)
+        }else if(method[[i]]$prior=="normal"){
 
-        mcmc <- rstan::sampling(stanmodels$T2ENormal,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nCC_c = sum(censor.CC==1),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yCC_c = data.CC[censor.CC==1,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xCC_c = data.CC[censor.CC==1,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1],
+            scale = method[[i]]$scale)
+
+          mcmc <- rstan::sampling(stanmodels$T2ENormal,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
+
+        }
+
+      }else if(sum(censor.CC==1)==0){
+
+        if(method[[i]]$prior=="noborrow"){
+
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1])
+
+          mcmc <- rstan::sampling(stanmodels$T2ENoborrowC0,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
+
+        }else if(method[[i]]$prior=="fullborrow"){
+
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1])
+
+          mcmc <- rstan::sampling(stanmodels$T2EFullborrowC0,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
+
+        }else if(method[[i]]$prior=="cauchy"){
+
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1],
+            scale = method[[i]]$scale)
+
+          mcmc <- rstan::sampling(stanmodels$T2ECauchyC0,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
+
+        }else if(method[[i]]$prior=="normal"){
+
+          dat <- list(
+            nCT_o = sum(censor.CT==0),
+            nCT_c = sum(censor.CT==1),
+            nCC_o = sum(censor.CC==0),
+            nEC_o = sum(censor.EC==0),
+            nEC_c = sum(censor.EC==1),
+            p     = ncov,
+            yCT_o = data.CT[censor.CT==0,1],
+            yCT_c = data.CT[censor.CT==1,1],
+            yCC_o = data.CC[censor.CC==0,1],
+            yEC_o = data.EC[censor.EC==0,1],
+            yEC_c = data.EC[censor.EC==1,1],
+            xCT_o = data.CT[censor.CT==0,-1],
+            xCT_c = data.CT[censor.CT==1,-1],
+            xCC_o = data.CC[censor.CC==0,-1],
+            xEC_o = data.EC[censor.EC==0,-1],
+            xEC_c = data.EC[censor.EC==1,-1],
+            scale = method[[i]]$scale)
+
+          mcmc <- rstan::sampling(stanmodels$T2ENormalC0,
+                                  data          = dat,
+                                  chains        = chains,
+                                  iter          = iter,
+                                  warmup        = warmup,
+                                  thin          = thin,
+                                  show_messages = FALSE,
+                                  cores         = 1,
+                                  refresh       = 0)
+          mcmc.sample <- rstan::extract(mcmc)
+
+        }
 
       }
 

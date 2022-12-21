@@ -21,9 +21,13 @@ RcppExport SEXP _rcpp_module_boot_stan_fit4ContFullborrow_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4ContNoborrow_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4ContNormal_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4T2ECauchy_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4T2ECauchyC0_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4T2EFullborrow_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4T2EFullborrowC0_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4T2ENoborrow_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4T2ENoborrowC0_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4T2ENormal_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4T2ENormalC0_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4BinCauchy_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4BinCauchy_mod, 0},
@@ -35,9 +39,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4ContNoborrow_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4ContNoborrow_mod, 0},
     {"_rcpp_module_boot_stan_fit4ContNormal_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4ContNormal_mod, 0},
     {"_rcpp_module_boot_stan_fit4T2ECauchy_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ECauchy_mod, 0},
+    {"_rcpp_module_boot_stan_fit4T2ECauchyC0_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ECauchyC0_mod, 0},
     {"_rcpp_module_boot_stan_fit4T2EFullborrow_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2EFullborrow_mod, 0},
+    {"_rcpp_module_boot_stan_fit4T2EFullborrowC0_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2EFullborrowC0_mod, 0},
     {"_rcpp_module_boot_stan_fit4T2ENoborrow_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ENoborrow_mod, 0},
+    {"_rcpp_module_boot_stan_fit4T2ENoborrowC0_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ENoborrowC0_mod, 0},
     {"_rcpp_module_boot_stan_fit4T2ENormal_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ENormal_mod, 0},
+    {"_rcpp_module_boot_stan_fit4T2ENormalC0_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4T2ENormalC0_mod, 0},
     {NULL, NULL, 0}
 };
 
