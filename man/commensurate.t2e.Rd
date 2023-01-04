@@ -8,9 +8,10 @@ time-to-event outcome}
 commensurate.t2e <- function(
   n.CT, n.CC, nevent.C, n.EC, nevent.E, accrual,
   out.mevent.CT, out.mevent.CC, driftHR,
-  cov.CT, cov.CC, cov.EC, cormat, method=method,
-  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025, nsim=10)
+  cov.C, cov.cor.C, cov.effect.C,
+  cov.E, cov.cor.E, cov.effect.E,
+  method, chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+  alternative="greater", sig.level=0.025, nsim)
 }
 \arguments{
 \item{n.CT}{Number of patients in concurrent treatment.}
@@ -32,17 +33,23 @@ commensurate.t2e <- function(
 \item{driftHR}{Hazard ratio between external control and concurrent control
 for which the bias should be plotted.}
 
-\item{cov.CT}{List of covariates in concurrent treatment. Distribution and
+\item{cov.C}{List of covariates in concurrent data. Distribution and
 and its parameters need to be specified for each covariate.}
 
-\item{cov.CC}{List of covariates in concurrent control. Distribution and
+\item{cov.cor.C}{Matrix of correlation coefficients for covariates in
+concurrent data, specified as Gaussian copula parameter.}
+
+\item{cov.effect.C}{Vector of covariate effects in concurrent data,
+specified as hazard ratio.}
+
+\item{cov.E}{List of covariates in external data. Distribution and
 and its parameters need to be specified for each covariate.}
 
-\item{cov.EC}{List of covariates in historical control. Distribution and
-and its parameters need to be specified for each covariate.}
+\item{cov.cor.E}{Matrix of correlation coefficients for covariates in
+external data, specified as Gaussian copula parameter.}
 
-\item{cormat}{Matrix of correlation coefficients for outcome and covariates,
-specified as Gaussian copula parameter.}
+\item{cov.effect.E}{Vector of covariate effects in external data,
+specified as hazard ratio.}
 
 \item{method}{List of information borrowing method. \code{"noborrow"} uses
 the concurrent data only. \code{"fullborrow"} uses the external control data
@@ -85,39 +92,43 @@ augmented by historical control. No borrowing and full borrowing are also
 implemented. The time-to-event outcome is applicable.
 }
 \examples{
-n.CT      <- 60
-n.CC      <- 60
-nevent.C  <- 100
-n.EC      <- 120
-nevent.E  <- 100
+n.CT      <- 50
+n.CC      <- 50
+nevent.C  <- 80
+n.EC      <- 50
+nevent.E  <- 40
 accrual   <- 16
 
 out.mevent.CT <- 6
 out.mevent.CC <- 6
-driftHR       <- 1.0
+driftHR       <- 1
 
-cov.CT <- list(list(dist="norm", mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.C <- list(list(dist="norm",mean=0,sd=1),
+              list(dist="binom",prob=0.4))
 
-cov.CC <- list(list(dist="norm", mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.cor.C <- rbind(c(  1,0.1),
+                   c(0.1,  1))
 
-cov.EC <- list(list(dist="norm", mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.effect.C <- c(0.1,0.1)
 
-cormat <- rbind(c(  1,0.1,0.1),
-                c(0.1,  1,0.1),
-                c(0.1,0.1,  1))
+cov.E <- list(list(dist="norm",mean=0,sd=1),
+              list(dist="binom",prob=0.4))
+
+cov.cor.E <- rbind(c(  1,0.1),
+                   c(0.1,  1))
+
+cov.effect.E <- c(0.1,0.1)
 
 method <- list(list(prior="noborrow"),
-               list(prior="fullborrow"),
-               list(prior="cauchy",scale=0.5),
                list(prior="normal",scale=0.5))
+
+nsim <- 5
 
 commensurate.t2e(
   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
   n.EC=n.EC, nevent.E=nevent.E, accrual=accrual,
   out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
-  cov.CT=cov.CT, cov.CC=cov.CC, cov.EC=cov.EC, cormat=cormat,
-  method=method)
+  cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
+  cov.E=cov.E, cov.cor.E=cov.cor.E, cov.effect.E=cov.effect.E,
+  method=method, alternative="less", nsim=nsim)
 }
