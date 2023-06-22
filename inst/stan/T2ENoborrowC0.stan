@@ -17,13 +17,11 @@ parameters {
   real<lower=0> alpha;
 }
 model {
-  alpha ~ exponential(1);
-
   for (i in 1:nCT_o)
-    yCT_o[i] ~ weibull(alpha,exp(gammaCC+theta+xCT_o[i]*beta));
+    yCT_o[i] ~ weibull(alpha,exp(-(gammaCC+theta+xCT_o[i]*beta)/alpha));
   for (i in 1:nCC_o)
-    yCC_o[i] ~ weibull(alpha,exp(gammaCC      +xCC_o[i]*beta));
+    yCC_o[i] ~ weibull(alpha,exp(-(gammaCC      +xCC_o[i]*beta)/alpha));
 
   for (i in 1:nCT_c)
-    target += weibull_lccdf(yCT_c[i]|alpha,exp(gammaCC+theta+xCT_c[i]*beta));
+    target += weibull_lccdf(yCT_c[i]|alpha,exp(-(gammaCC+theta+xCT_c[i]*beta)/alpha));
 }

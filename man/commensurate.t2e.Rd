@@ -2,64 +2,29 @@
 % Please edit documentation in R/commensurate.t2e.R
 \name{commensurate.t2e}
 \alias{commensurate.t2e}
-\title{Simulation study of hybrid control design with commensurate power prior:
-time-to-event outcome}
+\title{Commensurate power prior: time-to-event outcome}
 \usage{
-commensurate.t2e <- function(
-  n.CT, n.CC, nevent.C, n.EC, nevent.E, accrual,
-  out.mevent.CT, out.mevent.CC, driftHR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.E, cov.cor.E, cov.effect.E,
-  method, chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025, nsim)
+commensurate.t2e(
+ indata, subjid.EC, method.borrow,
+ chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+ alternative="greater", sig.level=0.025)
 }
 \arguments{
-\item{n.CT}{Number of patients in concurrent treatment.}
+\item{indata}{Dataset of a simulated trial, which is a data frame returned
+from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
+\code{trial.simulation.cont}.}
 
-\item{n.CC}{Number of patients in concurrent control.}
+\item{subjid.EC}{Subject ID of external control.}
 
-\item{nevent.C}{Number of events in concurrent data.}
-
-\item{n.EC}{Number of patients in external control.}
-
-\item{nevent.E}{Number of events in external control.}
-
-\item{accrual}{Accrual rate (number of enrolled patients per month).}
-
-\item{out.mevent.CT}{True median time to event in concurrent treatment.}
-
-\item{out.mevent.CC}{True median time to event in concurrent control.}
-
-\item{driftHR}{Hazard ratio between external control and concurrent control
-for which the bias should be plotted.}
-
-\item{cov.C}{List of covariates in concurrent data. Distribution and
-and its parameters need to be specified for each covariate.}
-
-\item{cov.cor.C}{Matrix of correlation coefficients for covariates in
-concurrent data, specified as Gaussian copula parameter.}
-
-\item{cov.effect.C}{Vector of covariate effects in concurrent data,
-specified as hazard ratio.}
-
-\item{cov.E}{List of covariates in external data. Distribution and
-and its parameters need to be specified for each covariate.}
-
-\item{cov.cor.E}{Matrix of correlation coefficients for covariates in
-external data, specified as Gaussian copula parameter.}
-
-\item{cov.effect.E}{Vector of covariate effects in external data,
-specified as hazard ratio.}
-
-\item{method}{List of information borrowing method. \code{"noborrow"} uses
-the concurrent data only. \code{"fullborrow"} uses the external control data
-without discounting. \code{"cauchy"} uses the commensurate prior to
+\item{method.borrow}{List of information borrowing method. \code{"noborrow"}
+uses the concurrent data only. \code{"fullborrow"} uses the external control
+data without discounting. \code{"cauchy"} uses the commensurate prior to
 dynamically borrow the external control data, and the commensurate parameter
-is assumed to follow half cauchy distribution. \code{"normal"} uses the
+is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
 commensurate prior to dynamically borrow the external control data, and the
-commensurate parameter is assumed to follow half normal distribution.
+commensurate parameter is assumed to follow half-normal distribution.
 \code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-half cauchy and half normal distribution respectively.}
+half-Cauchy and half-normal distribution respectively.}
 
 \item{chains}{Number of Markov chains in MCMC sampling. The default value is
 \code{chains=2}.}
@@ -67,7 +32,7 @@ half cauchy and half normal distribution respectively.}
 \item{iter}{Number of iterations for each chain (including warmup) in MCMC
 sampling. The default value is \code{iter=4000}.}
 
-\item{warmup}{Number of warmup (aka burnin) iterations per chain in MCMC
+\item{warmup}{Number of warmup (burnin) iterations per chain in MCMC
 sampling. The default value is \code{warmup=floor(iter/2)}.}
 
 \item{thin}{Period for saving samples in MCMC sampling. The default value
@@ -78,26 +43,22 @@ The default value is \code{alternative="greater"}.}
 
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
-
-\item{nsim}{Number of simulated trials. The default value is \code{nsim=10}.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 \item{theta}{Posterior mean, median, and sd of log hazard ratio.}
 }
 \description{
-Bayesian dynamic information borrowing with commensurate power prior is
-implemented for hybrid control design, where the concurrent control is
-augmented by historical control. No borrowing and full borrowing are also
-implemented. The time-to-event outcome is applicable.
+Commensurate power prior is implemented. No borrowing and full borrowing are
+also implemented. The time-to-event outcome is applicable.
 }
 \examples{
-n.CT      <- 50
-n.CC      <- 50
-nevent.C  <- 80
-n.EC      <- 50
-nevent.E  <- 40
-accrual   <- 16
+n.CT       <- 100
+n.CC       <- 50
+nevent.C   <- 100
+n.ECp      <- 1000
+nevent.ECp <- 800
+accrual    <- 16
 
 out.mevent.CT <- 6
 out.mevent.CC <- 6
@@ -111,24 +72,37 @@ cov.cor.C <- rbind(c(  1,0.1),
 
 cov.effect.C <- c(0.1,0.1)
 
-cov.E <- list(list(dist="norm",mean=0,sd=1),
-              list(dist="binom",prob=0.4))
+cov.EC <- list(list(dist="norm",mean=0,sd=1),
+               list(dist="binom",prob=0.4))
 
-cov.cor.E <- rbind(c(  1,0.1),
-                   c(0.1,  1))
+cov.cor.EC <- rbind(c(  1,0.1),
+                    c(0.1,  1))
 
-cov.effect.E <- c(0.1,0.1)
+cov.effect.EC <- c(0.1,0.1)
 
-method <- list(list(prior="noborrow"),
-               list(prior="normal",scale=0.5))
+indata <- trial.simulation.t2e(
+  n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
+  n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
+  out.mevent.CT, out.mevent.CC, driftHR,
+  cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
+  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 
-nsim <- 5
+n.EC <- 50
+
+method.whomatch <- "conc.treat"
+method.matching <- "optimal"
+method.psorder  <- NULL
+
+out.psmatch <- psmatch(
+  indata=indata, n.EC=n.EC,
+  method.whomatch=method.whomatch, method.matching=method.matching,
+  method.psorder=method.psorder)
+
+subjid.EC <- out.psmatch$subjid.EC
+
+method.borrow <- list(list(prior="noborrow"),
+                      list(prior="normal",scale=0.5))
 
 commensurate.t2e(
-  n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
-  n.EC=n.EC, nevent.E=nevent.E, accrual=accrual,
-  out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
-  cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-  cov.E=cov.E, cov.cor.E=cov.cor.E, cov.effect.E=cov.effect.E,
-  method=method, alternative="less", nsim=nsim)
+  indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
 }

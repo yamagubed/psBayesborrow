@@ -5,7 +5,7 @@
 #' specify the correlation between variables. Any probability distributions
 #' available in R STAT is applicable.
 #' @usage
-#' datagen(margdist,corvec,nsim)
+#' datagen(margdist, corvec, nsim)
 #' @param margdist List of distributions to be used for the data generation.
 #' @param corvec Vector of Gaussian copula correlation parameter.
 #' @param nsim Number of simulation.
