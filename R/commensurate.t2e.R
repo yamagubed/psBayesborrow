@@ -5,9 +5,9 @@
 #' also implemented. The time-to-event outcome is applicable.
 #' @usage
 #' commensurate.t2e(
-#'  indata, subjid.EC, method.borrow,
-#'  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-#'  alternative="greater", sig.level=0.025)
+#'   indata, subjid.EC, method.borrow,
+#'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+#'   alternative="greater", sig.level=0.025)
 #' @param indata Dataset of a simulated trial, which is a data frame returned
 #' from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
 #' \code{trial.simulation.cont}.

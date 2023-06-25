@@ -10,7 +10,7 @@
 #' available. No borrowing and full borrowing can also be implemented.
 #' The time-to-event outcome is applicable.
 #' @usage
-#' psborrow.t2e <- function(
+#' psborrow.t2e(
 #'   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, n.EC, accrual,
 #'   out.mevent.CT, out.mevent.CC, driftHR,
 #'   cov.C, cov.cor.C, cov.effect.C,
@@ -172,7 +172,7 @@ psborrow.t2e <- function(
     indata <- trial.simulation.t2e(
       n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
       n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
-      out.mevent.CT, out.mevent.CC, driftHR,
+      out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
       cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
       cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 
@@ -216,7 +216,7 @@ psborrow.t2e <- function(
 
   out.lambda.CT <- log(2)/out.mevent.CT
   out.lambda.CC <- log(2)/out.mevent.CC
-  t.theta <- log(out.lambda.CC/out.lambda.CT)
+  t.theta <- log(out.lambda.CT/out.lambda.CC)
 
   return(list(reject=reject,theta=theta,ov=ov,
               n.CT=n.CT,n.CC=n.CC,n.ECp=n.ECp,n.EC=n.EC,drift=driftHR,

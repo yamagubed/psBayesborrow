@@ -5,9 +5,9 @@
 \title{Commensurate power prior: time-to-event outcome}
 \usage{
 commensurate.t2e(
- indata, subjid.EC, method.borrow,
- chains=2, iter=4000, warmup=floor(iter/2), thin=1,
- alternative="greater", sig.level=0.025)
+  indata, subjid.EC, method.borrow,
+  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+  alternative="greater", sig.level=0.025)
 }
 \arguments{
 \item{indata}{Dataset of a simulated trial, which is a data frame returned

@@ -2,58 +2,29 @@
 % Please edit documentation in R/commensurate.bin.R
 \name{commensurate.bin}
 \alias{commensurate.bin}
-\title{Simulation study of hybrid control design with commensurate power prior:
-binary outcome}
+\title{Commensurate power prior: binary outcome}
 \usage{
 commensurate.bin(
-  n.CT, n.CC, n.EC,
-  out.prob.CT, out.prob.CC, driftOR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.E, cov.cor.E, cov.effect.E,
-  method, chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025, nsim)
+  indata, subjid.EC, method.borrow,
+  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+  alternative="greater", sig.level=0.025)
 }
 \arguments{
-\item{n.CT}{Number of patients in concurrent treatment.}
+\item{indata}{Dataset of a simulated trial, which is a data frame returned
+from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
+\code{trial.simulation.cont}.}
 
-\item{n.CC}{Number of patients in concurrent control.}
+\item{subjid.EC}{Subject ID of external control.}
 
-\item{n.EC}{Number of patients in external control.}
-
-\item{out.prob.CT}{True probability of outcome in concurrent treatment.}
-
-\item{out.prob.CC}{True probability of outcome in concurrent control.}
-
-\item{driftOR}{OR between external control and concurrent control for which
-the bias should be plotted.}
-
-\item{cov.C}{List of covariates in concurrent data. Distribution and
-and its parameters need to be specified for each covariate.}
-
-\item{cov.cor.C}{Matrix of correlation coefficients for covariates in
-concurrent data, specified as Gaussian copula parameter.}
-
-\item{cov.effect.C}{Vector of covariate effects in concurrent data,
-specified as odds ratio.}
-
-\item{cov.E}{List of covariates in external data. Distribution and
-and its parameters need to be specified for each covariate.}
-
-\item{cov.cor.E}{Matrix of correlation coefficients for covariates in
-external data, specified as Gaussian copula parameter.}
-
-\item{cov.effect.E}{Vector of covariate effects in external data,
-specified as odds ratio.}
-
-\item{method}{List of information borrowing method. \code{"noborrow"} uses
-the concurrent data only. \code{"fullborrow"} uses the external control data
-without discounting. \code{"cauchy"} uses the commensurate prior to
+\item{method.borrow}{List of information borrowing method. \code{"noborrow"}
+uses the concurrent data only. \code{"fullborrow"} uses the external control
+data without discounting. \code{"cauchy"} uses the commensurate prior to
 dynamically borrow the external control data, and the commensurate parameter
-is assumed to follow half cauchy distribution. \code{"normal"} uses the
+is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
 commensurate prior to dynamically borrow the external control data, and the
-commensurate parameter is assumed to follow half normal distribution.
+commensurate parameter is assumed to follow half-normal distribution.
 \code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-half cauchy and half normal distribution respectively.}
+half-Cauchy and half-normal distribution respectively.}
 
 \item{chains}{Number of Markov chains in MCMC sampling. The default value is
 \code{chains=2}.}
@@ -72,23 +43,19 @@ The default value is \code{alternative="greater"}.}
 
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
-
-\item{nsim}{Number of simulated trials. The default value is \code{nsim=10}.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 \item{theta}{Posterior mean, median, and sd of log odds ratio.}
 }
 \description{
-Bayesian dynamic information borrowing with commensurate power prior is
-implemented for hybrid control design, where the concurrent control is
-augmented by historical control. No borrowing and full borrowing are also
-implemented. The binary outcome is applicable.
+Commensurate power prior is implemented. No borrowing and full borrowing are
+also implemented. The binary outcome is applicable.
 }
 \examples{
-n.CT  <- 50
-n.CC  <- 50
-n.EC  <- 50
+n.CT       <- 100
+n.CC       <- 50
+n.ECp      <- 1000
 
 out.prob.CT <- 0.2
 out.prob.CC <- 0.2
@@ -102,23 +69,36 @@ cov.cor.C <- rbind(c(  1,0.1),
 
 cov.effect.C <- c(0.1,0.1)
 
-cov.E <- list(list(dist="norm",mean=0,sd=1),
-              list(dist="binom",prob=0.4))
+cov.EC <- list(list(dist="norm",mean=0,sd=1),
+               list(dist="binom",prob=0.4))
 
-cov.cor.E <- rbind(c(  1,0.1),
-                   c(0.1,  1))
+cov.cor.EC <- rbind(c(  1,0.1),
+                    c(0.1,  1))
 
-cov.effect.E <- c(0.1,0.1)
+cov.effect.EC <- c(0.1,0.1)
 
-method <- list(list(prior="noborrow"),
-               list(prior="normal",scale=0.5))
-
-nsim <- 5
-
-commensurate.bin(
-  n.CT=n.CT, n.CC=n.CC, n.EC=n.EC,
+indata <- trial.simulation.bin(
+  n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
   out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-  cov.E=cov.E, cov.cor.E=cov.cor.E, cov.effect.E=cov.effect.E,
-  method=method, nsim=nsim)
+  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+
+n.EC <- 50
+
+method.whomatch <- "conc.treat"
+method.matching <- "optimal"
+method.psorder  <- NULL
+
+out.psmatch <- psmatch(
+  indata=indata, n.EC=n.EC,
+  method.whomatch=method.whomatch, method.matching=method.matching,
+  method.psorder=method.psorder)
+
+subjid.EC <- out.psmatch$subjid.EC
+
+method.borrow <- list(list(prior="noborrow"),
+                      list(prior="normal",scale=0.5))
+
+commensurate.bin(
+  indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
 }

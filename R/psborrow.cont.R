@@ -1,6 +1,6 @@
 
 #' Simulation study of hybrid control design with Bayesian dynamic borrowing
-#' incorporating propensity score matched external control: time-to-event outcome
+#' incorporating propensity score matched external control: continuous outcome
 #'
 #' Bayesian dynamic borrowing is implemented for clinical trials with hybrid
 #' control design, where the concurrent control is augmented by external
@@ -8,11 +8,11 @@
 #' propensity score matching. Commensurate power prior is used for Bayesian
 #' dynamic borrowing, and half-normal or half-Cauchy commensurate prior is
 #' available. No borrowing and full borrowing can also be implemented.
-#' The time-to-event outcome is applicable.
+#' The continuous outcome is applicable.
 #' @usage
-#' psborrow.t2e <- function(
-#'   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, n.EC, accrual,
-#'   out.mevent.CT, out.mevent.CC, driftHR,
+#' psborrow.cont(
+#'   n.CT, n.CC, n.ECp, n.EC,
+#'   out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
 #'   cov.C, cov.cor.C, cov.effect.C,
 #'   cov.EC, cov.cor.EC, cov.effect.EC,
 #'   method.psest="glm", method.pslink="logit",
@@ -22,15 +22,15 @@
 #'   alternative="greater", sig.level=0.025, nsim, seed=NULL)
 #' @param n.CT Number of patients in concurrent treatment.
 #' @param n.CC Number of patients in concurrent control.
-#' @param nevent.C Number of events in concurrent treatment and control.
 #' @param n.ECp Number of patients in external control pool.
-#' @param nevent.ECp Number of events in external control pool.
 #' @param n.EC Number of patients in external control.
-#' @param accrual Accrual rate (number of enrolled patients per month).
-#' @param out.mevent.CT True median time to event in concurrent treatment.
-#' @param out.mevent.CC True median time to event in concurrent control.
-#' @param driftHR Hazard ratio between concurrent and external control for
-#' which the bias should be plotted.
+#' @param out.mean.CT True mean of outcome in concurrent treatment.
+#' @param out.sd.CT True sd of outcome in concurrent treatment.
+#' @param out.mean.CC True mean of outcome in concurrent control.
+#' @param out.sd.CC True as of outcome in concurrent control.
+#' @param driftdiff Difference between external control and concurrent control
+#' for which the bias should be plotted.
+#' @param out.sd.EC True as of outcome in external control.
 #' @param cov.C List of covariate distributions for concurrent treatment and
 #' control.
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
@@ -103,15 +103,15 @@
 #' @examples
 #' n.CT       <- 100
 #' n.CC       <- 50
-#' nevent.C   <- 100
 #' n.ECp      <- 1000
-#' nevent.ECp <- 800
 #' n.EC       <- 50
-#' accrual    <- 16
 #'
-#' out.mevent.CT <- 6
-#' out.mevent.CC <- 6
-#' driftHR       <- 1
+#' out.mean.CT <- 0
+#' out.sd.CT   <- 1
+#' out.mean.CC <- 0
+#' out.sd.CC   <- 1
+#' driftdiff   <- 0
+#' out.sd.EC   <- 1
 #'
 #' cov.C <- list(list(dist="norm",mean=0,sd=1),
 #'               list(dist="binom",prob=0.4))
@@ -138,10 +138,11 @@
 #'
 #' nsim <- 5
 #'
-#' psborrow.t2e(
-#'   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
-#'   n.ECp=n.ECp, nevent.ECp=nevent.ECp, n.EC=n.EC, accrual=accrual,
-#'   out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
+#' psborrow.cont(
+#'   n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp, n.EC=n.EC,
+#'   out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
+#'   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
+#'   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
 #'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
 #'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
 #'   method.whomatch=method.whomatch,
@@ -150,16 +151,16 @@
 #' @import overlapping
 #' @export
 
-psborrow.t2e <- function(
-    n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, n.EC, accrual,
-    out.mevent.CT, out.mevent.CC, driftHR,
-    cov.C, cov.cor.C, cov.effect.C,
-    cov.EC, cov.cor.EC, cov.effect.EC,
-    method.psest="glm", method.pslink="logit",
-    method.whomatch, method.matching, method.psorder,
-    method.borrow,
-    chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-    alternative="greater", sig.level=0.025, nsim, seed=NULL)
+psborrow.cont <- function(
+  n.CT, n.CC, n.ECp, n.EC,
+  out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
+  cov.C, cov.cor.C, cov.effect.C,
+  cov.EC, cov.cor.EC, cov.effect.EC,
+  method.psest="glm", method.pslink="logit",
+  method.whomatch, method.matching, method.psorder,
+  method.borrow,
+  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+  alternative="greater", sig.level=0.025, nsim, seed=NULL)
 {
   reject <- NULL
   theta  <- NULL
@@ -169,10 +170,11 @@ psborrow.t2e <- function(
 
   for(ss in 1:nsim){
 
-    indata <- trial.simulation.t2e(
-      n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
-      n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
-      out.mevent.CT, out.mevent.CC, driftHR,
+    indata <- trial.simulation.cont(
+      n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
+      out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
+      out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
+      driftdiff=driftdiff, out.sd.EC=out.sd.EC,
       cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
       cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 
@@ -184,7 +186,7 @@ psborrow.t2e <- function(
 
     subjid.EC <- out.psmatch$subjid.EC
 
-    out.commensurate <- commensurate.t2e(
+    out.commensurate <- commensurate.cont(
       indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow,
       chains=chains, iter=iter, warmup=warmup, thin=thin,
       alternative=alternative, sig.level=sig.level)
@@ -214,12 +216,10 @@ psborrow.t2e <- function(
     }
   }
 
-  out.lambda.CT <- log(2)/out.mevent.CT
-  out.lambda.CC <- log(2)/out.mevent.CC
-  t.theta <- log(out.lambda.CC/out.lambda.CT)
+  t.theta <- out.mean.CT-out.mean.CC
 
   return(list(reject=reject,theta=theta,ov=ov,
-              n.CT=n.CT,n.CC=n.CC,n.ECp=n.ECp,n.EC=n.EC,drift=driftHR,
+              n.CT=n.CT,n.CC=n.CC,n.ECp=n.ECp,n.EC=n.EC,drift=driftdiff,
               true.theta=t.theta,
               method.psest=method.psest,method.pslink=method.pslink,
               method.whomatch=method.whomatch,

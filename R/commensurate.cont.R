@@ -1,49 +1,26 @@
 
-#' Simulation study of hybrid control design with commensurate power prior:
-#' continuous outcome
+#' Commensurate power prior: continuous outcome
 #'
-#' Bayesian dynamic information borrowing with commensurate power prior is
-#' implemented for hybrid control design, where the concurrent control is
-#' augmented by historical control. No borrowing and full borrowing are also
-#' implemented. The continuous outcome is applicable.
+#' Commensurate power prior is implemented. No borrowing and full borrowing are
+#' also implemented. The continuous is applicable.
 #' @usage
 #' commensurate.cont(
-#'   n.CT, n.CC, n.EC,
-#'   out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-#'   cov.C, cov.cor.C, cov.effect.C,
-#'   cov.E, cov.cor.E, cov.effect.E,
-#'   method, chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-#'   alternative="greater", sig.level=0.025, nsim)
-#' @param n.CT Number of patients in concurrent treatment.
-#' @param n.CC Number of patients in concurrent control.
-#' @param n.EC Number of patients in external control.
-#' @param out.mean.CT True mean of outcome in concurrent treatment.
-#' @param out.sd.CT True sd of outcome in concurrent treatment.
-#' @param out.mean.CC True mean of outcome in concurrent control.
-#' @param out.sd.CC True as of outcome in concurrent control.
-#' @param driftdiff Difference between external control and concurrent control
-#' for which the bias should be plotted.
-#' @param cov.C List of covariates in concurrent data. Distribution and
-#' and its parameters need to be specified for each covariate.
-#' @param cov.cor.C Matrix of correlation coefficients for covariates in
-#' concurrent data, specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects in concurrent data,
-#' specified as mean difference.
-#' @param cov.E List of covariates in external data. Distribution and
-#' and its parameters need to be specified for each covariate.
-#' @param cov.cor.E Matrix of correlation coefficients for covariates in
-#' external data, specified as Gaussian copula parameter.
-#' @param cov.effect.E Vector of covariate effects in external data,
-#' specified as mean difference.
-#' @param method List of information borrowing method. \code{"noborrow"} uses
-#' the concurrent data only. \code{"fullborrow"} uses the external control data
-#' without discounting. \code{"cauchy"} uses the commensurate prior to
+#'   indata, subjid.EC, method.borrow,
+#'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+#'   alternative="greater", sig.level=0.025)
+#' @param indata Dataset of a simulated trial, which is a data frame returned
+#' from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
+#' \code{trial.simulation.cont}.
+#' @param subjid.EC Subject ID of external control.
+#' @param method.borrow List of information borrowing method. \code{"noborrow"}
+#' uses the concurrent data only. \code{"fullborrow"} uses the external control
+#' data without discounting. \code{"cauchy"} uses the commensurate prior to
 #' dynamically borrow the external control data, and the commensurate parameter
-#' is assumed to follow half cauchy distribution. \code{"normal"} uses the
+#' is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
 #' commensurate prior to dynamically borrow the external control data, and the
-#' commensurate parameter is assumed to follow half normal distribution.
+#' commensurate parameter is assumed to follow half-normal distribution.
 #' \code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-#' half cauchy and half normal distribution respectively.
+#' half-Cauchy and half-normal distribution respectively.
 #' @param chains Number of Markov chains in MCMC sampling. The default value is
 #' \code{chains=2}.
 #' @param iter Number of iterations for each chain (including warmup) in MCMC
@@ -56,14 +33,13 @@
 #' The default value is \code{alternative="greater"}.
 #' @param sig.level Significance level. The default value is
 #' \code{sig.level=0.025}.
-#' @param nsim Number of simulated trials. The default value is \code{nsim=10}.
 #' @return
 #' \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 #' \item{theta}{Posterior mean, median, and sd of mean difference.}
 #' @examples
-#' n.CT  <- 50
-#' n.CC  <- 50
-#' n.EC  <- 50
+#' n.CT       <- 100
+#' n.CC       <- 50
+#' n.ECp      <- 1000
 #'
 #' out.mean.CT <- 0
 #' out.sd.CT   <- 1
@@ -80,198 +56,192 @@
 #'
 #' cov.effect.C <- c(0.1,0.1)
 #'
-#' cov.E <- list(list(dist="norm",mean=0,sd=1),
-#'               list(dist="binom",prob=0.4))
+#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
+#'                list(dist="binom",prob=0.4))
 #'
-#' cov.cor.E <- rbind(c(  1,0.1),
-#'                    c(0.1,  1))
+#' cov.cor.EC <- rbind(c(  1,0.1),
+#'                     c(0.1,  1))
 #'
-#' cov.effect.E <- c(0.1,0.1)
+#' cov.effect.EC <- c(0.1,0.1)
 #'
-#' method <- list(list(prior="noborrow"),
-#'                list(prior="normal",scale=0.5))
+#' indata <- trial.simulation.cont(
+#'    n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
+#'    out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
+#'    out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
+#'    driftdiff=driftdiff, out.sd.EC=out.sd.EC,
+#'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 #'
-#' nsim <- 5
+#' n.EC <- 50
+#'
+#' method.whomatch <- "conc.treat"
+#' method.matching <- "optimal"
+#' method.psorder  <- NULL
+#'
+#' out.psmatch <- psmatch(
+#'   indata=indata, n.EC=n.EC,
+#'   method.whomatch=method.whomatch, method.matching=method.matching,
+#'   method.psorder=method.psorder)
+#'
+#' subjid.EC <- out.psmatch$subjid.EC
+#'
+#' method.borrow <- list(list(prior="noborrow"),
+#'                       list(prior="normal",scale=0.5))
 #'
 #' commensurate.cont(
-#'   n.CT=n.CT, n.CC=n.CC, n.EC=n.EC,
-#'   out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
-#'   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
-#'   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
-#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'   cov.E=cov.E, cov.cor.E=cov.cor.E, cov.effect.E=cov.effect.E,
-#'   method=method, nsim=nsim)
+#'   indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
 #' @import rstan
 #' @export
 
 commensurate.cont <- function(
-  n.CT, n.CC, n.EC,
-  out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.E, cov.cor.E, cov.effect.E,
-  method, chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025, nsim)
+  indata, subjid.EC, method.borrow,
+  chains=2, iter=4000, warmup=floor(iter/2), thin=1,
+  alternative="greater", sig.level=0.025)
 {
-  ncov  <- length(cov.C)
-  out.mean.EC <- driftdiff+out.mean.CC
-  nmethod     <- length(method)
+  ncov      <- indata$ncov
+  cov.lab   <- paste("X",1:ncov,sep="")
 
-  marg.C <- NULL
-  marg.E <- NULL
-  mean.C <- NULL
-  mean.E <- NULL
+  data.outp <- indata$data
+  data.out  <- rbind(data.outp[data.outp$study==1,],data.outp[subjid.EC,])
 
-  for(i in 1:ncov){
-    if(cov.C[[i]]$dist=="norm"){
-      marg.C <- append(marg.C,list(list(dist=cov.C[[i]]$dist,parm=list(mean=cov.C[[i]]$mean,sd=cov.C[[i]]$sd))))
-      marg.E <- append(marg.E,list(list(dist=cov.E[[i]]$dist,parm=list(mean=cov.E[[i]]$mean,sd=cov.E[[i]]$sd))))
+  data.CT <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab)]
+  data.CC <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab)]
+  data.EC <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab)]
 
-      mean.C <- c(mean.C,cov.C[[i]]$mean)
-      mean.E <- c(mean.E,cov.E[[i]]$mean)
-    }else if(cov.C[[i]]$dist=="binom"){
-      marg.C <- append(marg.C,list(list(dist=cov.C[[i]]$dist,parm=list(size=1,prob=cov.C[[i]]$prob))))
-      marg.E <- append(marg.E,list(list(dist=cov.E[[i]]$dist,parm=list(size=1,prob=cov.E[[i]]$prob))))
+  nmethod    <- length(method.borrow)
+  method.lab <- character(nmethod)
 
-      mean.C <- c(mean.C,cov.C[[i]]$prob)
-      mean.E <- c(mean.E,cov.E[[i]]$prob)
+  reject <- data.frame(X0="reject")
+  theta  <- data.frame(X0=c("mean","median","sd","lcri","ucri"))
+
+  for(i in 1:nmethod){
+
+    if(method.borrow[[i]]$prior=="noborrow"){
+
+      dat <- list(
+        nCT = nrow(data.CT),
+        nCC = nrow(data.CC),
+        p   = ncov,
+        yCT = data.CT[,1],
+        yCC = data.CC[,1],
+        xCT = data.CT[,-1],
+        xCC = data.CC[,-1])
+
+      mcmc <- rstan::sampling(stanmodels$ContNoborrow,
+                              data          = dat,
+                              chains        = chains,
+                              iter          = iter,
+                              warmup        = warmup,
+                              thin          = thin,
+                              show_messages = FALSE,
+                              cores         = 1,
+                              refresh       = 0)
+      mcmc.sample <- rstan::extract(mcmc)
+
+    }else if(method.borrow[[i]]$prior=="fullborrow"){
+
+      dat <- list(
+        nCT = nrow(data.CT),
+        nCC = nrow(data.CC),
+        nEC = nrow(data.EC),
+        p   = ncov,
+        yCT = data.CT[,1],
+        yCC = data.CC[,1],
+        yEC = data.EC[,1],
+        xCT = data.CT[,-1],
+        xCC = data.CC[,-1],
+        xEC = data.EC[,-1])
+
+      mcmc <- rstan::sampling(stanmodels$ContFullborrow,
+                                data          = dat,
+                                chains        = chains,
+                                iter          = iter,
+                                warmup        = warmup,
+                                thin          = thin,
+                                show_messages = FALSE,
+                                cores         = 1,
+                                refresh       = 0)
+      mcmc.sample <- rstan::extract(mcmc)
+
+    }else if(method.borrow[[i]]$prior=="cauchy"){
+
+      dat <- list(
+        nCT = nrow(data.CT),
+        nCC = nrow(data.CC),
+        nEC = nrow(data.EC),
+        p   = ncov,
+        yCT = data.CT[,1],
+        yCC = data.CC[,1],
+        yEC = data.EC[,1],
+        xCT = data.CT[,-1],
+        xCC = data.CC[,-1],
+        xEC = data.EC[,-1],
+        scale = method.borrow[[i]]$scale)
+
+      mcmc <- rstan::sampling(stanmodels$ContCauchy,
+                              data          = dat,
+                              chains        = chains,
+                              iter          = iter,
+                              warmup        = warmup,
+                              thin          = thin,
+                              show_messages = FALSE,
+                              cores         = 1,
+                              refresh       = 0)
+      mcmc.sample <- rstan::extract(mcmc)
+
+    }else if(method.borrow[[i]]$prior=="normal"){
+
+      dat <- list(
+        nCT = nrow(data.CT),
+        nCC = nrow(data.CC),
+        nEC = nrow(data.EC),
+        p   = ncov,
+        yCT = data.CT[,1],
+        yCC = data.CC[,1],
+        yEC = data.EC[,1],
+        xCT = data.CT[,-1],
+        xCC = data.CC[,-1],
+        xEC = data.EC[,-1],
+        scale = method.borrow[[i]]$scale)
+
+      mcmc <- rstan::sampling(stanmodels$ContNormal,
+                              data          = dat,
+                              chains        = chains,
+                              iter          = iter,
+                              warmup        = warmup,
+                              thin          = thin,
+                              show_messages = FALSE,
+                              cores         = 1,
+                              refresh       = 0)
+      mcmc.sample <- rstan::extract(mcmc)
+
+    }
+
+    meandiff <- mcmc.sample$theta
+
+    if(alternative=="greater"){
+      postprob <- mean(meandiff>0)
+    }else if(alternative=="less"){
+      postprob <- mean(meandiff<0)
+    }
+    cri <- quantile(meandiff,c(sig.level,1-sig.level))
+
+    reject.v <- (postprob>(1-sig.level))
+    reject   <- data.frame(reject,X1=reject.v)
+
+    theta.v <- c(mean(meandiff),median(meandiff),sd(meandiff),cri[[1]],cri[[2]])
+    theta   <- data.frame(theta,X1=theta.v)
+
+    mname <- method.borrow[[i]]$prior
+    if((mname=="noborrow")|(mname=="fullborrow")){
+      method.lab[i] <- mname
+    }else if((mname=="cauchy")|(mname=="normal")){
+      method.lab[i] <- paste(mname,method.borrow[[i]]$scale,sep="")
     }
   }
 
-  int.C   <- out.mean.CC-sum(mean.C*cov.effect.C)
-  int.E   <- out.mean.EC-sum(mean.E*cov.effect.E)
-  t.theta <- out.mean.CT-out.mean.CC
+  colnames(reject) <- c("measure",method.lab)
+  colnames(theta)  <- c("measure",method.lab)
 
-  cvec.C  <- cov.cor.C[lower.tri(cov.cor.C)]
-  cvec.E  <- cov.cor.E[lower.tri(cov.cor.E)]
-
-  reject <- array(0,dim=c(nsim,nmethod))
-  theta  <- array(0,dim=c(nsim,nmethod,3))
-
-  for(ss in 1:nsim){
-
-    data.cov.CT <- datagen(margdist=marg.C,corvec=cvec.C,nsim=n.CT)
-    data.cov.CC <- datagen(margdist=marg.C,corvec=cvec.C,nsim=n.CC)
-    data.cov.EC <- datagen(margdist=marg.E,corvec=cvec.E,nsim=n.EC)
-
-    mu.CT <- int.C+t.theta+apply(data.cov.CT,1,function(x){sum(x*cov.effect.C)})
-    mu.CC <- int.C        +apply(data.cov.CC,1,function(x){sum(x*cov.effect.C)})
-    mu.EC <- int.E        +apply(data.cov.EC,1,function(x){sum(x*cov.effect.E)})
-
-    data.CT <- cbind(rnorm(n.CT,mean=mu.CT,sd=out.sd.CT),data.cov.CT)
-    data.CC <- cbind(rnorm(n.CC,mean=mu.CC,sd=out.sd.CC),data.cov.CC)
-    data.EC <- cbind(rnorm(n.EC,mean=mu.EC,sd=out.sd.EC),data.cov.EC)
-
-    for(i in 1:nmethod){
-
-      if(method[[i]]$prior=="noborrow"){
-
-        dat <- list(
-          nCT = n.CT,
-          nCC = n.CC,
-          p   = ncov,
-          yCT = data.CT[,1],
-          yCC = data.CC[,1],
-          xCT = data.CT[,-1],
-          xCC = data.CC[,-1])
-
-        mcmc <- rstan::sampling(stanmodels$ContNoborrow,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }else if(method[[i]]$prior=="fullborrow"){
-
-        dat <- list(
-          nCT = n.CT,
-          nCC = n.CC,
-          nEC = n.EC,
-          p   = ncov,
-          yCT = data.CT[,1],
-          yCC = data.CC[,1],
-          yEC = data.EC[,1],
-          xCT = data.CT[,-1],
-          xCC = data.CC[,-1],
-          xEC = data.EC[,-1])
-
-        mcmc <- rstan::sampling(stanmodels$ContFullborrow,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }else if(method[[i]]$prior=="cauchy"){
-
-        dat <- list(
-          nCT = n.CT,
-          nCC = n.CC,
-          nEC = n.EC,
-          p   = ncov,
-          yCT = data.CT[,1],
-          yCC = data.CC[,1],
-          yEC = data.EC[,1],
-          xCT = data.CT[,-1],
-          xCC = data.CC[,-1],
-          xEC = data.EC[,-1],
-          scale = method[[i]]$scale)
-
-        mcmc <- rstan::sampling(stanmodels$ContCauchy,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }else if(method[[i]]$prior=="normal"){
-
-        dat <- list(
-          nCT = n.CT,
-          nCC = n.CC,
-          nEC = n.EC,
-          p   = ncov,
-          yCT = data.CT[,1],
-          yCC = data.CC[,1],
-          yEC = data.EC[,1],
-          xCT = data.CT[,-1],
-          xCC = data.CC[,-1],
-          xEC = data.EC[,-1],
-          scale = method[[i]]$scale)
-
-        mcmc <- rstan::sampling(stanmodels$ContNormal,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }
-
-      if(alternative=="greater"){
-        postprob <- mean(mcmc.sample$theta>0)
-      }else if(alternative=="less"){
-        postprob <- mean(mcmc.sample$theta<0)
-      }
-      reject[ss,i] <- (postprob>(1-sig.level))
-      theta[ss,i,] <- c(mean(mcmc.sample$theta),median(mcmc.sample$theta),sd(mcmc.sample$theta))
-    }}
-
-  return(list(reject=reject,theta=theta))
+  return(list(reject=reject,theta=theta,method.lab=method.lab))
 }
