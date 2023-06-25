@@ -184,5 +184,5 @@ psborrow.cont(
   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
   method.whomatch=method.whomatch,
   method.matching=method.matching, method.psorder=method.psorder,
-  method.borrow=method.borrow, nsim=100, seed=100)
+  method.borrow=method.borrow, nsim=nsim, seed=100)
 }

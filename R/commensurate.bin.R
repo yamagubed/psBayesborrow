@@ -171,7 +171,7 @@ commensurate.bin <- function(
         xCT = data.CT[,-1],
         xCC = data.CC[,-1],
         xEC = data.EC[,-1],
-        scale = method[[i]]$scale)
+        scale = method.borrow[[i]]$scale)
 
       mcmc <- rstan::sampling(stanmodels$BinCauchy,
                               data          = dat,
@@ -197,7 +197,7 @@ commensurate.bin <- function(
         xCT = data.CT[,-1],
         xCC = data.CC[,-1],
         xEC = data.EC[,-1],
-        scale = method[[i]]$scale)
+        scale = method.borrow[[i]]$scale)
 
       mcmc <- rstan::sampling(stanmodels$BinNormal,
                               data          = dat,

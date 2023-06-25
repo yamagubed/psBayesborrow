@@ -117,14 +117,6 @@ trial.simulation.bin <- function(
   data.CC  <- cbind(rbinom(n.CC, 1,p.CC), data.cov.CC)
   data.ECp <- cbind(rbinom(n.ECp,1,p.ECp),data.cov.ECp)
 
-  sigma.CT  <- exp(int.C +t.theta+apply(data.cov.CT, 1,function(x){sum(x*lcov.effect.C)}))
-  sigma.CC  <- exp(int.C         +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect.C)}))
-  sigma.ECp <- exp(int.EC        +apply(data.cov.ECp,1,function(x){sum(x*lcov.effect.EC)}))
-
-  data.CT  <- cbind(rweibull(n.CT, shape=1,scale=sigma.CT), data.cov.CT)
-  data.CC  <- cbind(rweibull(n.CC, shape=1,scale=sigma.CC), data.cov.CC)
-  data.ECp <- cbind(rweibull(n.ECp,shape=1,scale=sigma.ECp),data.cov.ECp)
-
   outdata <- rbind(
     data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1]),
     data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1]),
