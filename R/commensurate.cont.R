@@ -94,40 +94,55 @@
 #' @export
 
 commensurate.cont <- function(
-  indata, subjid.EC, method.borrow,
+  formula, data, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025)
+  alternative="greater", sig.level=0.025,
+  seed=sample.int(.Machine$integer.max,1))
 {
-  ncov      <- indata$ncov
-  cov.lab   <- paste("X",1:ncov,sep="")
+  mf      <- model.frame(formula=formula,data=data)
+  cov.lab <- attr(attr(mf,"terms"),"term.labels")
+  y       <- model.response(mf)
 
-  data.outp <- indata$data
-  data.out  <- rbind(data.outp[data.outp$study==1,],data.outp[subjid.EC,])
+  if(length(data$study)==0){
+    stop("Dataset must contain a variable of study.")
 
-  data.CT <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab)]
-  data.CC <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab)]
-  data.EC <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab)]
+  }else if(length(data$treat)==0){
+    stop("Dataset must contain a variable of treat.")
 
-  nmethod    <- length(method.borrow)
-  method.lab <- character(nmethod)
+  }else{
 
-  reject <- data.frame(X0="reject")
-  theta  <- data.frame(X0=c("mean","median","sd","lcri","ucri"))
+    ncov     <- length(cov.lab)
+    data.out <- data.frame(y      = as.vector(y),
+                           study  = data$study,
+                           treat  = data$treat,
+                           data[,cov.lab,drop=FALSE])
 
-  for(i in 1:nmethod){
+    data.CT <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab)]
+    data.CC <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab)]
+    data.EC <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab)]
 
-    if(method.borrow[[i]]$prior=="noborrow"){
+    nmethod    <- length(method.borrow)
+    method.lab <- character(nmethod)
 
-      dat <- list(
-        nCT = nrow(data.CT),
-        nCC = nrow(data.CC),
-        p   = ncov,
-        yCT = data.CT[,1],
-        yCC = data.CC[,1],
-        xCT = data.CT[,-1],
-        xCC = data.CC[,-1])
+    reject <- data.frame(X0="reject")
+    theta  <- data.frame(X0=c("mean","median","sd","lcri","ucri"))
 
-      mcmc <- rstan::sampling(stanmodels$ContNoborrow,
+    stan.obj <- NULL
+
+    for(i in 1:nmethod){
+
+      if(method.borrow[[i]]$prior=="noborrow"){
+
+        dat <- list(
+          nCT = nrow(data.CT),
+          nCC = nrow(data.CC),
+          p   = ncov,
+          yCT = as.array(data.CT[,"y"]),
+          yCC = as.array(data.CC[,"y"]),
+          xCT = as.matrix(data.CT[,cov.lab,drop=FALSE]),
+          xCC = as.matrix(data.CC[,cov.lab,drop=FALSE]))
+
+        mcmc <- rstan::sampling(stanmodels$ContNoborrow,
                               data          = dat,
                               chains        = chains,
                               iter          = iter,
@@ -135,24 +150,25 @@ commensurate.cont <- function(
                               thin          = thin,
                               show_messages = FALSE,
                               cores         = 1,
-                              refresh       = 0)
-      mcmc.sample <- rstan::extract(mcmc)
+                              refresh       = 0,
+                              seed          = seed)
+        mcmc.sample <- rstan::extract(mcmc)
 
-    }else if(method.borrow[[i]]$prior=="fullborrow"){
+      }else if(method.borrow[[i]]$prior=="fullborrow"){
 
-      dat <- list(
-        nCT = nrow(data.CT),
-        nCC = nrow(data.CC),
-        nEC = nrow(data.EC),
-        p   = ncov,
-        yCT = data.CT[,1],
-        yCC = data.CC[,1],
-        yEC = data.EC[,1],
-        xCT = data.CT[,-1],
-        xCC = data.CC[,-1],
-        xEC = data.EC[,-1])
+        dat <- list(
+          nCT = nrow(data.CT),
+          nCC = nrow(data.CC),
+          nEC = nrow(data.EC),
+          p   = ncov,
+          yCT = as.array(data.CT[,"y"]),
+          yCC = as.array(data.CC[,"y"]),
+          yEC = as.array(data.EC[,"y"]),
+          xCT = as.matrix(data.CT[,cov.lab,drop=FALSE]),
+          xCC = as.matrix(data.CC[,cov.lab,drop=FALSE]),
+          xEC = as.matrix(data.EC[,cov.lab,drop=FALSE]))
 
-      mcmc <- rstan::sampling(stanmodels$ContFullborrow,
+        mcmc <- rstan::sampling(stanmodels$ContFullborrow,
                                 data          = dat,
                                 chains        = chains,
                                 iter          = iter,
@@ -160,88 +176,95 @@ commensurate.cont <- function(
                                 thin          = thin,
                                 show_messages = FALSE,
                                 cores         = 1,
-                                refresh       = 0)
-      mcmc.sample <- rstan::extract(mcmc)
+                                refresh       = 0,
+                                seed          = seed)
+        mcmc.sample <- rstan::extract(mcmc)
 
-    }else if(method.borrow[[i]]$prior=="cauchy"){
+      }else if(method.borrow[[i]]$prior=="cauchy"){
 
-      dat <- list(
-        nCT = nrow(data.CT),
-        nCC = nrow(data.CC),
-        nEC = nrow(data.EC),
-        p   = ncov,
-        yCT = data.CT[,1],
-        yCC = data.CC[,1],
-        yEC = data.EC[,1],
-        xCT = data.CT[,-1],
-        xCC = data.CC[,-1],
-        xEC = data.EC[,-1],
-        scale = method.borrow[[i]]$scale)
+        dat <- list(
+          nCT   = nrow(data.CT),
+          nCC   = nrow(data.CC),
+          nEC   = nrow(data.EC),
+          p     = ncov,
+          yCT   = as.array(data.CT[,"y"]),
+          yCC   = as.array(data.CC[,"y"]),
+          yEC   = as.array(data.EC[,"y"]),
+          xCT   = as.matrix(data.CT[,cov.lab,drop=FALSE]),
+          xCC   = as.matrix(data.CC[,cov.lab,drop=FALSE]),
+          xEC   = as.matrix(data.EC[,cov.lab,drop=FALSE]),
+          scale = method.borrow[[i]]$scale)
 
-      mcmc <- rstan::sampling(stanmodels$ContCauchy,
-                              data          = dat,
-                              chains        = chains,
-                              iter          = iter,
-                              warmup        = warmup,
-                              thin          = thin,
-                              show_messages = FALSE,
-                              cores         = 1,
-                              refresh       = 0)
-      mcmc.sample <- rstan::extract(mcmc)
+        mcmc <- rstan::sampling(stanmodels$ContCauchy,
+                                data          = dat,
+                                chains        = chains,
+                                iter          = iter,
+                                warmup        = warmup,
+                                thin          = thin,
+                                show_messages = FALSE,
+                                cores         = 1,
+                                refresh       = 0,
+                                seed          = seed)
+        mcmc.sample <- rstan::extract(mcmc)
 
-    }else if(method.borrow[[i]]$prior=="normal"){
+      }else if(method.borrow[[i]]$prior=="normal"){
 
-      dat <- list(
-        nCT = nrow(data.CT),
-        nCC = nrow(data.CC),
-        nEC = nrow(data.EC),
-        p   = ncov,
-        yCT = data.CT[,1],
-        yCC = data.CC[,1],
-        yEC = data.EC[,1],
-        xCT = data.CT[,-1],
-        xCC = data.CC[,-1],
-        xEC = data.EC[,-1],
-        scale = method.borrow[[i]]$scale)
+        dat <- list(
+          nCT   = nrow(data.CT),
+          nCC   = nrow(data.CC),
+          nEC   = nrow(data.EC),
+          p     = ncov,
+          yCT   = as.array(data.CT[,"y"]),
+          yCC   = as.array(data.CC[,"y"]),
+          yEC   = as.array(data.EC[,"y"]),
+          xCT   = as.matrix(data.CT[,cov.lab,drop=FALSE]),
+          xCC   = as.matrix(data.CC[,cov.lab,drop=FALSE]),
+          xEC   = as.matrix(data.EC[,cov.lab,drop=FALSE]),
+          scale = method.borrow[[i]]$scale)
 
-      mcmc <- rstan::sampling(stanmodels$ContNormal,
-                              data          = dat,
-                              chains        = chains,
-                              iter          = iter,
-                              warmup        = warmup,
-                              thin          = thin,
-                              show_messages = FALSE,
-                              cores         = 1,
-                              refresh       = 0)
-      mcmc.sample <- rstan::extract(mcmc)
+        mcmc <- rstan::sampling(stanmodels$ContNormal,
+                                data          = dat,
+                                chains        = chains,
+                                iter          = iter,
+                                warmup        = warmup,
+                                thin          = thin,
+                                show_messages = FALSE,
+                                cores         = 1,
+                                refresh       = 0,
+                                seed          = seed)
+        mcmc.sample <- rstan::extract(mcmc)
 
+      }
+
+      meandiff <- mcmc.sample$theta
+
+      if(alternative=="greater"){
+        postprob <- mean(meandiff>0)
+      }else if(alternative=="less"){
+        postprob <- mean(meandiff<0)
+      }
+      cri <- quantile(meandiff,c(sig.level,1-sig.level))
+
+      reject.v <- (postprob>(1-sig.level))
+      reject   <- data.frame(reject,X1=reject.v)
+
+      theta.v <- c(mean(meandiff),median(meandiff),sd(meandiff),cri[[1]],cri[[2]])
+      theta   <- data.frame(theta,X1=theta.v)
+
+      mname <- method.borrow[[i]]$prior
+      if((mname=="noborrow")|(mname=="fullborrow")){
+        method.lab[i] <- mname
+      }else if((mname=="cauchy")|(mname=="normal")){
+        method.lab[i] <- paste(mname,method.borrow[[i]]$scale,sep="")
+      }
+
+      stan.obj <- append(stan.obj,list(mcmc))
     }
 
-    meandiff <- mcmc.sample$theta
+    colnames(reject) <- c("measure",method.lab)
+    colnames(theta)  <- c("measure",method.lab)
+    names(stan.obj)  <- method.lab
 
-    if(alternative=="greater"){
-      postprob <- mean(meandiff>0)
-    }else if(alternative=="less"){
-      postprob <- mean(meandiff<0)
-    }
-    cri <- quantile(meandiff,c(sig.level,1-sig.level))
-
-    reject.v <- (postprob>(1-sig.level))
-    reject   <- data.frame(reject,X1=reject.v)
-
-    theta.v <- c(mean(meandiff),median(meandiff),sd(meandiff),cri[[1]],cri[[2]])
-    theta   <- data.frame(theta,X1=theta.v)
-
-    mname <- method.borrow[[i]]$prior
-    if((mname=="noborrow")|(mname=="fullborrow")){
-      method.lab[i] <- mname
-    }else if((mname=="cauchy")|(mname=="normal")){
-      method.lab[i] <- paste(mname,method.borrow[[i]]$scale,sep="")
-    }
+    return(list(reject=reject,theta=theta,stan.obj=stan.obj))
   }
-
-  colnames(reject) <- c("measure",method.lab)
-  colnames(theta)  <- c("measure",method.lab)
-
-  return(list(reject=reject,theta=theta,method.lab=method.lab))
 }

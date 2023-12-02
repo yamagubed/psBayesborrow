@@ -86,148 +86,253 @@
 #'   indata=indata, n.EC=n.EC,
 #'   method.whomatch=method.whomatch, method.matching=method.matching,
 #'   method.psorder=method.psorder)
-#' @import MatchIt
+#' @import dplyr optmatch MatchIt e1071
 #' @export
 
 psmatch <- function(
-  indata, n.EC,
+  formula, data, n.EC,
   method.psest="glm", method.pslink="logit",
   method.whomatch, method.matching, method.psorder)
 {
-  cov.lab  <- paste("X",1:indata$ncov,sep="")
-  data.cov <- data.frame(indata$data[,c("study","treat",cov.lab)],
-                         conc.contl=0,conc.treat=0,conc.all=0,treat2contl=0)
+  mf      <- model.frame(formula=formula,data=data)
+  cov.lab <- attr(attr(mf,"terms"),"term.labels")
 
-  CT.flg <- (data.cov$study==1)&(data.cov$treat==1)
-  CC.flg <- (data.cov$study==1)&(data.cov$treat==0)
+  if(length(data$study)==0){
+    stop("Dataset must contain a variable of study.")
 
-  data.cov[CT.flg,"conc.contl"]  <- 99
-  data.cov[CT.flg,"conc.treat"]  <- 1
-  data.cov[CT.flg,"conc.all"]    <- 1
-  data.cov[CT.flg,"treat2contl"] <- 1
+  }else if(length(data$treat)==0){
+    stop("Dataset must contain a variable of treat.")
 
-  data.cov[CC.flg,"conc.contl"]  <- 1
-  data.cov[CC.flg,"conc.treat"]  <- 99
-  data.cov[CC.flg,"conc.all"]    <- 1
-  data.cov[CC.flg,"treat2contl"] <- 0
+  }else{
 
-  fit.ps <- MatchIt::matchit(study~.,
-                             data     = data.cov[,c("study",cov.lab)],
-                             method   = NULL,
-                             distance = method.psest,
-                             link     = method.pslink)
-  data.cov.ps <- data.frame(data.cov,ps=as.vector(fit.ps$distance))
-
-  match.pts  <- (data.cov.ps[,method.whomatch]!=99)
-  data.match <- data.cov.ps[match.pts,c(method.whomatch,cov.lab)]
-  colnames(data.match) <- c("match",cov.lab)
-
-  if(method.whomatch=="conc.contl"){
-
-    n.CC  <- sum(CC.flg)
-    ratio <- n.EC/n.CC
-
-    if(method.matching=="optimal"){
-
-      fit.match <- MatchIt::matchit(match~.,
-                                    data     = data.match,
-                                    method   = method.matching,
-                                    distance = data.cov.ps[match.pts,"ps"],
-                                    ratio    = ratio)
-      subjid.EC <- as.numeric(fit.match$match.matrix)
-
-    }else if(method.matching=="nearest"){
-
-      fit.match <- MatchIt::matchit(match~.,
-                                    data     = data.match,
-                                    method   = method.matching,
-                                    distance = data.cov.ps[match.pts,"ps"],
-                                    m.order  = method.psorder,
-                                    ratio    = ratio)
-      subjid.EC <- as.numeric(fit.match$match.matrix)
+    bootmatch.optimal <- function(nwps,dmat)
+    {
+      boot.data.match <- rbind(data.frame(study=1,ps=nwps,match=1),dmat[dmat$match==0,])
+      bootmatching    <- matchit(match~.,
+                                 data     = boot.data.match,
+                                 method   = "optimal",
+                                 distance = boot.data.match[,"ps"])
+      subjid.EC  <- as.numeric(bootmatching$match.matrix)
+      return(subjid.EC)
     }
 
-  }else if((method.whomatch=="conc.treat")|(method.whomatch=="conc.all")){
+    bootmatch.nearest <- function(nwps,dmat,method.psorder)
+    {
+      boot.data.match <- rbind(data.frame(study=1,ps=nwps,match=1),dmat[dmat$match==0,])
+      bootmatching    <- matchit(match~.,
+                                 data     = boot.data.match,
+                                 method   = "nearest",
+                                 distance = boot.data.match[,"ps"],
+                                 m.order  = method.psorder)
+      subjid.EC  <- as.numeric(bootmatching$match.matrix)
+      return(subjid.EC)
+    }
 
-    if(method.matching=="optimal"){
+    medps <- function(invet.ps,n.EC)
+    {
+      n.C   <- length(invet.ps)
+      wk.n1 <- floor(n.C/n.EC)
+      wk.n2 <- n.C-wk.n1*n.EC
+      wk.n3 <- sample(n.EC,wk.n2)
+      wk.n4 <- data.frame(X1=1:n.EC,X2=wk.n1)
+      wk.n4[wk.n3,"X2"] <- wk.n1+1
+      wk.n5 <- wk.n4 %>% mutate(en=cumsum(X2))
+      wk.n6 <- data.frame(wk.n5,st=c(1,wk.n5$en[-n.EC]+1))
 
-      fit.match <- MatchIt::matchit(match~.,
-                                    data     = data.match,
-                                    method   = method.matching,
-                                    distance = data.cov.ps[match.pts,"ps"])
-      subjid.EC <- sample(as.numeric(fit.match$match.matrix),n.EC)
+      wk.ps1 <- sort(invet.ps)
+      wk.ps2 <- apply(as.matrix(1:n.EC),1,function(x){median(wk.ps1[wk.n6$st[x]:wk.n6$en[x]])})
 
-    }else if(method.matching=="nearest"){
+      return(wk.ps2)
+    }
 
-      ps.M1 <- data.cov.ps[data.cov.ps[,method.whomatch]==1,"ps"]
-      ps.M0 <- data.cov.ps[data.cov.ps[,method.whomatch]==0,"ps"]
-      ps.M  <- sort(abs(apply(as.matrix(ps.M1),1,function(x){x-ps.M0})))
+    ncov     <- length(cov.lab)
+    data.cov <- data.frame(data[,c("study","treat",cov.lab)],
+                           conc.contl=0,conc.treat=0,conc.all=0,treat2contl=0)
 
-      ncal <- n.EC
-      while(1){
+    CT.flg <- (data.cov$study==1)&(data.cov$treat==1)
+    CC.flg <- (data.cov$study==1)&(data.cov$treat==0)
+
+    data.cov[CT.flg,"conc.contl"]  <- 99
+    data.cov[CT.flg,"conc.treat"]  <- 1
+    data.cov[CT.flg,"conc.all"]    <- 1
+    data.cov[CT.flg,"treat2contl"] <- 1
+
+    data.cov[CC.flg,"conc.contl"]  <- 1
+    data.cov[CC.flg,"conc.treat"]  <- 99
+    data.cov[CC.flg,"conc.all"]    <- 1
+    data.cov[CC.flg,"treat2contl"] <- 0
+
+    fit.ps <- MatchIt::matchit(study~.,
+                               data     = data.cov[,c("study",cov.lab)],
+                               method   = NULL,
+                               distance = method.psest,
+                               link     = method.pslink)
+    data.cov.ps <- data.frame(data.cov,ps=as.vector(fit.ps$distance))
+
+    match.pts  <- (data.cov.ps[,method.whomatch]!=99)
+    data.match <- data.cov.ps[match.pts,c(method.whomatch,cov.lab)]
+    colnames(data.match) <- c("match",cov.lab)
+
+    if(method.whomatch=="conc.contl"){
+
+      n.CC  <- sum(CC.flg)
+      ratio <- n.EC/n.CC
+
+      if(method.matching=="optimal"){
+
         fit.match <- MatchIt::matchit(match~.,
-                                      data        = data.match,
-                                      method      = method.matching,
-                                      distance    = data.cov.ps[match.pts,"ps"],
-                                      m.order     = method.psorder,
-                                      caliper     = ps.M[ncal],
-                                      std.caliper = FALSE)
-        if(sum(!is.na(fit.match$match.matrix))>=n.EC){
-          nearest <- fit.match$match.matrix
-          break
-        }else{
-          ncal <- ncal+1
-        }
-      }
-      subjid.EC <- sample(as.numeric(nearest[!is.na(nearest),]),n.EC)
-    }
+                                      data     = data.match,
+                                      method   = method.matching,
+                                      distance = data.cov.ps[match.pts,"ps"],
+                                      ratio    = ratio)
+        subjid.EC <- as.numeric(fit.match$match.matrix)
 
-  }else if(method.whomatch=="treat2contl"){
+      }else if(method.matching=="nearest"){
 
-    if(method.matching=="optimal"){
-
-      fit.match <- MatchIt::matchit(match~.,
-                                    data     = data.match,
-                                    method   = method.matching,
-                                    distance = data.cov.ps[match.pts,"ps"])
-      subjid.C1 <- as.numeric(fit.match$match.matrix)
-      subjid.C2 <- subjid.C1[data.cov.ps[subjid.C1,"study"]==0]
-      if(length(subjid.C2)>=n.EC){
-        subjid.EC <- sample(subjid.C2,n.EC)
-      }else{
-        subjid.EC <- subjid.C2
-      }
-
-    }else if(method.matching=="nearest"){
-
-      ps.M1 <- data.cov.ps[data.cov.ps[,method.whomatch]==1,"ps"]
-      ps.M0 <- data.cov.ps[data.cov.ps[,method.whomatch]==0,"ps"]
-      ps.M  <- sort(abs(apply(as.matrix(ps.M1),1,function(x){x-ps.M0})))
-
-      ncal <- n.EC
-      while(1){
         fit.match <- MatchIt::matchit(match~.,
-                                      data        = data.match,
-                                      method      = method.matching,
-                                      distance    = data.cov.ps[match.pts,"ps"],
-                                      m.order     = method.psorder,
-                                      caliper     = ps.M[ncal],
-                                      std.caliper = FALSE)
-
-        subjid.C1 <- fit.match$match.matrix
-        subjid.C2 <- as.numeric(subjid.C1[!is.na(subjid.C1)])
-        subjid.C3 <- subjid.C2[data.cov.ps[subjid.C2,"study"]==0]
-
-        if(length(subjid.C3)>=n.EC){
-          nearest <- subjid.C3
-          break
-        }else{
-          ncal <- ncal+1
-        }
+                                      data     = data.match,
+                                      method   = method.matching,
+                                      distance = data.cov.ps[match.pts,"ps"],
+                                      m.order  = method.psorder,
+                                      ratio    = ratio)
+        subjid.EC <- as.numeric(fit.match$match.matrix)
       }
-      subjid.EC <- sample(nearest,n.EC)
+
+    }else if((method.whomatch=="conc.treat")|(method.whomatch=="conc.all")){
+
+      if(method.matching=="optimal"){
+
+        fit.match <- MatchIt::matchit(match~.,
+                                      data     = data.match,
+                                      method   = method.matching,
+                                      distance = data.cov.ps[match.pts,"ps"])
+        subjid.EC <- sample(as.numeric(fit.match$match.matrix),n.EC)
+
+      }else if(method.matching=="nearest"){
+
+        ps.M1 <- data.cov.ps[data.cov.ps[,method.whomatch]==1,"ps"]
+        ps.M0 <- data.cov.ps[data.cov.ps[,method.whomatch]==0,"ps"]
+        ps.M  <- sort(abs(apply(as.matrix(ps.M1),1,function(x){x-ps.M0})))
+
+        ncal <- n.EC
+        while(1){
+          fit.match <- MatchIt::matchit(match~.,
+                                        data        = data.match,
+                                        method      = method.matching,
+                                        distance    = data.cov.ps[match.pts,"ps"],
+                                        m.order     = method.psorder,
+                                        caliper     = ps.M[ncal],
+                                        std.caliper = FALSE)
+          if(sum(!is.na(fit.match$match.matrix))>=n.EC){
+            nearest <- fit.match$match.matrix
+            break
+          }else{
+            ncal <- ncal+1
+          }
+        }
+        subjid.EC <- sample(as.numeric(nearest[!is.na(nearest),]),n.EC)
+
+      }else if((method.matching=="boot.random.optimal")|(method.matching=="boot.random.nearest")|
+               (method.matching=="boot.highprob.optimal")|(method.matching=="boot.highprob.nearest")){
+
+        pre.new.ps <- data.match[data.match$match==1,"ps"]
+        boot       <- replicate(B,sample(pre.new.ps,n.EC))
+
+        if((method.matching=="boot.random.optimal")|(method.matching=="boot.highprob.optimal")){
+          bs.match <- apply(boot,2,function(x){return(bootmatch.optimal(nwps=x,dmat=data.match))})
+        }else if((method.matching=="boot.random.nearest")|(method.matching=="boot.highprob.nearest")){
+          bs.match <- apply(boot,2,function(x){return(bootmatch.nearest(nwps=x,dmat=data.match,method.psorder=method.psorder))})
+        }
+
+        ECp.lab  <- as.numeric(rownames(data.match[data.match$match==0,]))
+        bc.prob  <- apply(as.matrix(ECp.lab),1,function(x){return(mean(bs.match==x))})
+
+        if((method.matching=="boot.random.optimal")|(method.matching=="boot.random.nearest")){
+          subjid.EC <- sample(ECp.lab,n.EC,prob=bc.prob)
+        }else if((method.matching=="boot.highprob.optimal")|(method.matching=="boot.highprob.nearest")){
+          subjid.EC <- ECp.lab[order(bc.prob,decreasing=TRUE)[1:n.EC]]
+        }
+
+      }else if((method.matching=="med.optimal")|(method.matching=="med.nearest")|
+               (method.matching=="km.optimal")|(method.matching=="km.nearest")|
+               (method.matching=="cm.optimal")|(method.matching=="cm.nearest")){
+
+        pre.new.ps <- data.match[data.match$match==1,"ps"]
+
+        if((method.matching=="med.optimal")|(method.matching=="med.nearest")){
+          new.ps <- medps(invet.ps=pre.new.ps,n.EC=n.EC)
+        }else if((method.matching=="km.optimal")|(method.matching=="km.nearest")){
+          new.ps <- as.vector(kmeans(pre.new.ps,n.EC)$centers)
+        }else if((method.matching=="cm.optimal")|(method.matching=="cm.nearest")){
+          new.ps <- as.vector(cmeans(pre.new.ps,n.EC)$centers)
+        }
+        new.data.match <- rbind(data.frame(study=1,ps=new.ps,match=1),data.match[data.match$match==0,])
+
+        if((method.matching=="med.optimal")|(method.matching=="km.optimal")|(method.matching=="cm.optimal")){
+
+          fit.match <- MatchIt::matchit(match~.,
+                                        data     = new.data.match,
+                                        method   = "optimal",
+                                        distance = new.data.match[,"ps"])
+
+        }else if((method.matching=="med.nearest")|(method.matching=="km.nearest")|(method.matching=="cm.nearest")){
+
+          fit.match <- MatchIt::matchit(match~.,
+                                        data     = new.data.match,
+                                        method   = "nearest",
+                                        distance = new.data.match[,"ps"],
+                                        m.order  = method.psorder)
+        }
+        subjid.EC <- as.numeric(fit.match$match.matrix)
+      }
+
+    }else if(method.whomatch=="treat2contl"){
+
+      if(method.matching=="optimal"){
+
+        fit.match <- MatchIt::matchit(match~.,
+                                      data     = data.match,
+                                      method   = method.matching,
+                                      distance = data.cov.ps[match.pts,"ps"])
+        subjid.C1 <- as.numeric(fit.match$match.matrix)
+        subjid.C2 <- subjid.C1[data.cov.ps[subjid.C1,"study"]==0]
+        if(length(subjid.C2)>=n.EC){
+          subjid.EC <- sample(subjid.C2,n.EC)
+        }else{
+          subjid.EC <- subjid.C2
+        }
+
+      }else if(method.matching=="nearest"){
+
+        ps.M1 <- data.cov.ps[data.cov.ps[,method.whomatch]==1,"ps"]
+        ps.M0 <- data.cov.ps[data.cov.ps[,method.whomatch]==0,"ps"]
+        ps.M  <- sort(abs(apply(as.matrix(ps.M1),1,function(x){x-ps.M0})))
+
+        ncal <- n.EC
+        while(1){
+          fit.match <- MatchIt::matchit(match~.,
+                                        data        = data.match,
+                                        method      = method.matching,
+                                        distance    = data.cov.ps[match.pts,"ps"],
+                                        m.order     = method.psorder,
+                                        caliper     = ps.M[ncal],
+                                        std.caliper = FALSE)
+
+          subjid.C1 <- fit.match$match.matrix
+          subjid.C2 <- as.numeric(subjid.C1[!is.na(subjid.C1)])
+          subjid.C3 <- subjid.C2[data.cov.ps[subjid.C2,"study"]==0]
+
+          if(length(subjid.C3)>=n.EC){
+            nearest <- subjid.C3
+            break
+          }else{
+            ncal <- ncal+1
+          }
+        }
+        subjid.EC <- sample(nearest,n.EC)
+      }
     }
+
+    return(list(subjid.EC=subjid.EC,data.ps=data.cov.ps[,c("study","treat",cov.lab,"ps")]))
   }
-
-  return(list(subjid.EC=subjid.EC,data.cov.ps=data.cov.ps))
 }

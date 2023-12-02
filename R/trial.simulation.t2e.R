@@ -180,10 +180,10 @@ trial.simulation.t2e <- function(
   data.ECp   <- data.ECp[data.ECp[,1]>0,]
 
   outdata <- rbind(
-    data.frame(study=1,treat=1,y=data.CT[,1], censor=censor.CT, data.CT[,-1]),
-    data.frame(study=1,treat=0,y=data.CC[,1], censor=censor.CC, data.CC[,-1]),
-    data.frame(study=0,treat=0,y=data.ECp[,1],censor=censor.ECp,data.ECp[,-1]))
+    data.frame(study=1,treat=1,time=data.CT[,1], status=1-censor.CT, data.CT[,-1]),
+    data.frame(study=1,treat=0,time=data.CC[,1], status=1-censor.CC, data.CC[,-1]),
+    data.frame(study=0,treat=0,time=data.ECp[,1],status=1-censor.ECp,data.ECp[,-1]))
 
-  return(list(data=outdata,ncov=ncov))
+  return(outdata)
 }
 

@@ -22,6 +22,9 @@ Imports:
     boot,
     MatchIt,
     dplyr,
+    survival,
+    optmatch,
+    e1071,
     overlapping
 LinkingTo: 
     BH (>= 1.66.0),

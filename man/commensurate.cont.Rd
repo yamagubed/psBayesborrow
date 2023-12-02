@@ -10,12 +10,6 @@ commensurate.cont(
   alternative="greater", sig.level=0.025)
 }
 \arguments{
-\item{indata}{Dataset of a simulated trial, which is a data frame returned
-from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-\code{trial.simulation.cont}.}
-
-\item{subjid.EC}{Subject ID of external control.}
-
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control
 data without discounting. \code{"cauchy"} uses the commensurate prior to
@@ -43,6 +37,12 @@ The default value is \code{alternative="greater"}.}
 
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
+
+\item{indata}{Dataset of a simulated trial, which is a data frame returned
+from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
+\code{trial.simulation.cont}.}
+
+\item{subjid.EC}{Subject ID of external control.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}

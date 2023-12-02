@@ -5,16 +5,15 @@
 \title{Commensurate power prior: time-to-event outcome}
 \usage{
 commensurate.t2e(
-  indata, subjid.EC, method.borrow,
+  formula, data, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025)
+  alternative="greater", sig.level=0.025,
+  seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
-\item{indata}{Dataset of a simulated trial, which is a data frame returned
-from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-\code{trial.simulation.cont}.}
+\item{formula}{formula.}
 
-\item{subjid.EC}{Subject ID of external control.}
+\item{data}{data.}
 
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control

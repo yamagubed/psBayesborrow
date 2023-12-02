@@ -10,10 +10,6 @@ psmatch(
   method.whomatch, method.matching, method.psorder)
 }
 \arguments{
-\item{indata}{Dataset of a simulated trial, which is a data frame returned
-from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-\code{trial.simulation.cont}.}
-
 \item{n.EC}{Number of patients in external control.}
 
 \item{method.psest}{Method of estimating the propensity score. Allowable
@@ -46,6 +42,10 @@ propensity score; \code{"smallest"}, where matching takes place in ascending
 order of propensity score; \code{"random"}, where matching takes place in a
 random order; \code{"data"}, where matching takes place based on the order
 of units in the data.}
+
+\item{indata}{Dataset of a simulated trial, which is a data frame returned
+from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
+\code{trial.simulation.cont}.}
 }
 \value{
 \item{subjid.EC}{Subject ID of external control.}

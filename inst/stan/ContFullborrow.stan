@@ -1,8 +1,8 @@
 data {
-  int<lower=1> nCT;
-  int<lower=1> nCC;
-  int<lower=1> nEC;
-  int<lower=1> p;
+  int<lower=0> nCT;
+  int<lower=0> nCC;
+  int<lower=0> nEC;
+  int<lower=0> p;
   vector[nCT] yCT;
   vector[nCC] yCC;
   vector[nEC] yEC;

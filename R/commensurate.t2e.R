@@ -5,13 +5,12 @@
 #' also implemented. The time-to-event outcome is applicable.
 #' @usage
 #' commensurate.t2e(
-#'   indata, subjid.EC, method.borrow,
+#'   formula, data, method.borrow,
 #'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-#'   alternative="greater", sig.level=0.025)
-#' @param indata Dataset of a simulated trial, which is a data frame returned
-#' from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-#' \code{trial.simulation.cont}.
-#' @param subjid.EC Subject ID of external control.
+#'   alternative="greater", sig.level=0.025,
+#'   seed=sample.int(.Machine$integer.max,1))
+#' @param formula formula.
+#' @param data data.
 #' @param method.borrow List of information borrowing method. \code{"noborrow"}
 #' uses the concurrent data only. \code{"fullborrow"} uses the external control
 #' data without discounting. \code{"cauchy"} uses the commensurate prior to
@@ -37,90 +36,106 @@
 #' \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 #' \item{theta}{Posterior mean, median, and sd of log hazard ratio.}
 #' @examples
-#' n.CT       <- 100
-#' n.CC       <- 50
-#' nevent.C   <- 100
-#' n.ECp      <- 1000
-#' nevent.ECp <- 800
-#' accrual    <- 16
+#'  n.CT       <- 100
+#'  n.CC       <- 50
+#'  nevent.C   <- 100
+#'  n.ECp      <- 1000
+#'  nevent.ECp <- 800
+#'  accrual    <- 16
 #'
-#' out.mevent.CT <- 6
-#' out.mevent.CC <- 6
-#' driftHR       <- 1
+#'  out.mevent.CT <- 6
+#'  out.mevent.CC <- 6
+#'  driftHR       <- 1
 #'
-#' cov.C <- list(list(dist="norm",mean=0,sd=1),
-#'               list(dist="binom",prob=0.4))
-#'
-#' cov.cor.C <- rbind(c(  1,0.1),
-#'                    c(0.1,  1))
-#'
-#' cov.effect.C <- c(0.1,0.1)
-#'
-#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
+#'  cov.C <- list(list(dist="norm",mean=0,sd=1),
 #'                list(dist="binom",prob=0.4))
 #'
-#' cov.cor.EC <- rbind(c(  1,0.1),
+#'  cov.cor.C <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.1,0.1)
+#'  cov.effect.C <- c(0.1,0.1)
 #'
-#' indata <- trial.simulation.t2e(
-#'   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
-#'   n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
-#'   out.mevent.CT, out.mevent.CC, driftHR,
-#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#'  cov.EC <- list(list(dist="norm",mean=0,sd=1),
+#'                 list(dist="binom",prob=0.4))
 #'
-#' n.EC <- 50
+#'  cov.cor.EC <- rbind(c(  1,0.1),
+#'                      c(0.1,  1))
 #'
-#' method.whomatch <- "conc.treat"
-#' method.matching <- "optimal"
-#' method.psorder  <- NULL
+#'  cov.effect.EC <- c(0.1,0.1)
 #'
-#' out.psmatch <- psmatch(
-#'   indata=indata, n.EC=n.EC,
-#'   method.whomatch=method.whomatch, method.matching=method.matching,
-#'   method.psorder=method.psorder)
+#'  indata <- trial.simulation.t2e(
+#'    n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
+#'    n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
+#'    out.mevent.CT, out.mevent.CC, driftHR,
+#'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 #'
-#' subjid.EC <- out.psmatch$subjid.EC
+#'  n.EC <- 50
 #'
-#' method.borrow <- list(list(prior="noborrow"),
-#'                       list(prior="normal",scale=0.5))
+#'  method.whomatch <- "conc.treat"
+#'  method.matching <- "optimal"
+#'  method.psorder  <- NULL
 #'
-#' commensurate.t2e(
-#'   indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
-#' @import rstan
+#'  out.psmatch <- psmatch(
+#'    study~X1+X2, data=indata, n.EC=n.EC,
+#'    method.whomatch=method.whomatch, method.matching=method.matching,
+#'    method.psorder=method.psorder)
+#'
+#'  indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
+#'
+#'  method.borrow <- list(list(prior="noborrow"),
+#'                        list(prior="normal",scale=0.5))
+#'
+#'  commensurate.t2e(Surv(time,status)~X1+X2,data=indata.match,method.borrow=method.borrow)
+#' @import rstan survival
 #' @export
 
 commensurate.t2e <- function(
-  indata, subjid.EC, method.borrow,
+  formula, data, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025)
+  alternative="greater", sig.level=0.025,
+  seed=sample.int(.Machine$integer.max,1))
 {
-  ncov      <- indata$ncov
-  cov.lab   <- paste("X",1:ncov,sep="")
+  mf      <- model.frame(formula=formula,data=data)
+  cov.lab <- attr(attr(mf,"terms"),"term.labels")
+  y       <- model.response(mf)
 
-  data.outp <- indata$data
-  data.out  <- rbind(data.outp[data.outp$study==1,],data.outp[subjid.EC,])
+  if(!survival::is.Surv(y)){
+    stop("Outcome must be Surv class.")
 
-  censor.CT <- data.out[(data.out$study==1)&(data.out$treat==1),"censor"]
-  data.CT   <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab)]
+  }else if(length(data$study)==0){
+    stop("Dataset must contain a variable of study.")
 
-  censor.CC <- data.out[(data.out$study==1)&(data.out$treat==0),"censor"]
-  data.CC   <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab)]
+  }else if(length(data$treat)==0){
+    stop("Dataset must contain a variable of treat.")
 
-  censor.EC <- data.out[(data.out$study==0)&(data.out$treat==0),"censor"]
-  data.EC   <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab)]
+  }else{
 
-  nmethod    <- length(method.borrow)
-  method.lab <- character(nmethod)
+    ncov     <- length(cov.lab)
+    data.out <- data.frame(y      = as.vector(y[,1]),
+                           censor = 1-as.vector(y[,2]),
+                           study  = data$study,
+                           treat  = data$treat,
+                           data[,cov.lab,drop=FALSE])
 
-  reject <- data.frame(X0="reject")
-  theta  <- data.frame(X0=c("mean","median","sd","lcri","ucri"))
+    censor.CT <- data.out[(data.out$study==1)&(data.out$treat==1),"censor"]
+    data.CT   <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab),drop=FALSE]
 
-  for(i in 1:nmethod){
+    censor.CC <- data.out[(data.out$study==1)&(data.out$treat==0),"censor"]
+    data.CC   <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab),drop=FALSE]
 
-    if(sum(censor.CC==1)>0){
+    censor.EC <- data.out[(data.out$study==0)&(data.out$treat==0),"censor"]
+    data.EC   <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab),drop=FALSE]
+
+    nmethod    <- length(method.borrow)
+    method.lab <- character(nmethod)
+
+    reject <- data.frame(X0="reject")
+    theta  <- data.frame(X0=c("mean","median","sd","lcri","ucri"))
+
+    stan.obj <- NULL
+
+    for(i in 1:nmethod){
 
       if(method.borrow[[i]]$prior=="noborrow"){
 
@@ -130,14 +145,14 @@ commensurate.t2e <- function(
           nCC_o = sum(censor.CC==0),
           nCC_c = sum(censor.CC==1),
           p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yCC_c = as.array(data.CC[censor.CC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xCC_c = matrix(as.matrix(data.CC[censor.CC==1,-1]),sum(censor.CC==1),ncov))
+          yCT_o = as.array(data.CT[censor.CT==0,"y"]),
+          yCT_c = as.array(data.CT[censor.CT==1,"y"]),
+          yCC_o = as.array(data.CC[censor.CC==0,"y"]),
+          yCC_c = as.array(data.CC[censor.CC==1,"y"]),
+          xCT_o = as.matrix(data.CT[censor.CT==0,cov.lab,drop=FALSE]),
+          xCT_c = as.matrix(data.CT[censor.CT==1,cov.lab,drop=FALSE]),
+          xCC_o = as.matrix(data.CC[censor.CC==0,cov.lab,drop=FALSE]),
+          xCC_c = as.matrix(data.CC[censor.CC==1,cov.lab,drop=FALSE]))
 
         mcmc <- rstan::sampling(stanmodels$T2ENoborrow,
                                 data          = dat,
@@ -147,7 +162,8 @@ commensurate.t2e <- function(
                                 thin          = thin,
                                 show_messages = FALSE,
                                 cores         = 1,
-                                refresh       = 0)
+                                refresh       = 0,
+                                seed          = seed)
         mcmc.sample <- rstan::extract(mcmc)
 
       }else if(method.borrow[[i]]$prior=="fullborrow"){
@@ -160,18 +176,18 @@ commensurate.t2e <- function(
           nEC_o = sum(censor.EC==0),
           nEC_c = sum(censor.EC==1),
           p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yCC_c = as.array(data.CC[censor.CC==1,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xCC_c = matrix(as.matrix(data.CC[censor.CC==1,-1]),sum(censor.CC==1),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov))
+          yCT_o = as.array(data.CT[censor.CT==0,"y"]),
+          yCT_c = as.array(data.CT[censor.CT==1,"y"]),
+          yCC_o = as.array(data.CC[censor.CC==0,"y"]),
+          yCC_c = as.array(data.CC[censor.CC==1,"y"]),
+          yEC_o = as.array(data.EC[censor.EC==0,"y"]),
+          yEC_c = as.array(data.EC[censor.EC==1,"y"]),
+          xCT_o = as.matrix(data.CT[censor.CT==0,cov.lab,drop=FALSE]),
+          xCT_c = as.matrix(data.CT[censor.CT==1,cov.lab,drop=FALSE]),
+          xCC_o = as.matrix(data.CC[censor.CC==0,cov.lab,drop=FALSE]),
+          xCC_c = as.matrix(data.CC[censor.CC==1,cov.lab,drop=FALSE]),
+          xEC_o = as.matrix(data.EC[censor.EC==0,cov.lab,drop=FALSE]),
+          xEC_c = as.matrix(data.EC[censor.EC==1,cov.lab,drop=FALSE]))
 
         mcmc <- rstan::sampling(stanmodels$T2EFullborrow,
                                 data          = dat,
@@ -181,7 +197,8 @@ commensurate.t2e <- function(
                                 thin          = thin,
                                 show_messages = FALSE,
                                 cores         = 1,
-                                refresh       = 0)
+                                refresh       = 0,
+                                seed          = seed)
         mcmc.sample <- rstan::extract(mcmc)
 
       }else if(method.borrow[[i]]$prior=="cauchy"){
@@ -194,18 +211,18 @@ commensurate.t2e <- function(
           nEC_o = sum(censor.EC==0),
           nEC_c = sum(censor.EC==1),
           p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yCC_c = as.array(data.CC[censor.CC==1,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xCC_c = matrix(as.matrix(data.CC[censor.CC==1,-1]),sum(censor.CC==1),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov),
+          yCT_o = as.array(data.CT[censor.CT==0,"y"]),
+          yCT_c = as.array(data.CT[censor.CT==1,"y"]),
+          yCC_o = as.array(data.CC[censor.CC==0,"y"]),
+          yCC_c = as.array(data.CC[censor.CC==1,"y"]),
+          yEC_o = as.array(data.EC[censor.EC==0,"y"]),
+          yEC_c = as.array(data.EC[censor.EC==1,"y"]),
+          xCT_o = as.matrix(data.CT[censor.CT==0,cov.lab,drop=FALSE]),
+          xCT_c = as.matrix(data.CT[censor.CT==1,cov.lab,drop=FALSE]),
+          xCC_o = as.matrix(data.CC[censor.CC==0,cov.lab,drop=FALSE]),
+          xCC_c = as.matrix(data.CC[censor.CC==1,cov.lab,drop=FALSE]),
+          xEC_o = as.matrix(data.EC[censor.EC==0,cov.lab,drop=FALSE]),
+          xEC_c = as.matrix(data.EC[censor.EC==1,cov.lab,drop=FALSE]),
           scale = method.borrow[[i]]$scale)
 
         mcmc <- rstan::sampling(stanmodels$T2ECauchy,
@@ -216,7 +233,8 @@ commensurate.t2e <- function(
                                 thin          = thin,
                                 show_messages = FALSE,
                                 cores         = 1,
-                                refresh       = 0)
+                                refresh       = 0,
+                                seed          = seed)
         mcmc.sample <- rstan::extract(mcmc)
 
       }else if(method.borrow[[i]]$prior=="normal"){
@@ -229,18 +247,18 @@ commensurate.t2e <- function(
           nEC_o = sum(censor.EC==0),
           nEC_c = sum(censor.EC==1),
           p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yCC_c = as.array(data.CC[censor.CC==1,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xCC_c = matrix(as.matrix(data.CC[censor.CC==1,-1]),sum(censor.CC==1),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov),
+          yCT_o = as.array(data.CT[censor.CT==0,"y"]),
+          yCT_c = as.array(data.CT[censor.CT==1,"y"]),
+          yCC_o = as.array(data.CC[censor.CC==0,"y"]),
+          yCC_c = as.array(data.CC[censor.CC==1,"y"]),
+          yEC_o = as.array(data.EC[censor.EC==0,"y"]),
+          yEC_c = as.array(data.EC[censor.EC==1,"y"]),
+          xCT_o = as.matrix(data.CT[censor.CT==0,cov.lab,drop=FALSE]),
+          xCT_c = as.matrix(data.CT[censor.CT==1,cov.lab,drop=FALSE]),
+          xCC_o = as.matrix(data.CC[censor.CC==0,cov.lab,drop=FALSE]),
+          xCC_c = as.matrix(data.CC[censor.CC==1,cov.lab,drop=FALSE]),
+          xEC_o = as.matrix(data.EC[censor.EC==0,cov.lab,drop=FALSE]),
+          xEC_c = as.matrix(data.EC[censor.EC==1,cov.lab,drop=FALSE]),
           scale = method.borrow[[i]]$scale)
 
         mcmc <- rstan::sampling(stanmodels$T2ENormal,
@@ -251,162 +269,41 @@ commensurate.t2e <- function(
                                 thin          = thin,
                                 show_messages = FALSE,
                                 cores         = 1,
-                                refresh       = 0)
+                                refresh       = 0,
+                                seed          = seed)
         mcmc.sample <- rstan::extract(mcmc)
 
       }
 
-    }else if(sum(censor.CC==1)==0){
+      loghr <- mcmc.sample$theta
 
-      if(method.borrow[[i]]$prior=="noborrow"){
+      if(alternative=="greater"){
+        postprob <- mean(loghr>0)
+      }else if(alternative=="less"){
+        postprob <- mean(loghr<0)
+      }
+      cri <- quantile(loghr,c(sig.level,1-sig.level))
 
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov))
+      reject.v <- (postprob>(1-sig.level))
+      reject   <- data.frame(reject,X1=reject.v)
 
-        mcmc <- rstan::sampling(stanmodels$T2ENoborrowC0,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
+      theta.v <- c(mean(loghr),median(loghr),sd(loghr),cri[[1]],cri[[2]])
+      theta   <- data.frame(theta,X1=theta.v)
 
-      }else if(method.borrow[[i]]$prior=="fullborrow"){
-
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov))
-
-        mcmc <- rstan::sampling(stanmodels$T2EFullborrowC0,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }else if(method.borrow[[i]]$prior=="cauchy"){
-
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov),
-          scale = method.borrow[[i]]$scale)
-
-        mcmc <- rstan::sampling(stanmodels$T2ECauchyC0,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
-      }else if(method.borrow[[i]]$prior=="normal"){
-
-        dat <- list(
-          nCT_o = sum(censor.CT==0),
-          nCT_c = sum(censor.CT==1),
-          nCC_o = sum(censor.CC==0),
-          nEC_o = sum(censor.EC==0),
-          nEC_c = sum(censor.EC==1),
-          p     = ncov,
-          yCT_o = as.array(data.CT[censor.CT==0,1]),
-          yCT_c = as.array(data.CT[censor.CT==1,1]),
-          yCC_o = as.array(data.CC[censor.CC==0,1]),
-          yEC_o = as.array(data.EC[censor.EC==0,1]),
-          yEC_c = as.array(data.EC[censor.EC==1,1]),
-          xCT_o = matrix(as.matrix(data.CT[censor.CT==0,-1]),sum(censor.CT==0),ncov),
-          xCT_c = matrix(as.matrix(data.CT[censor.CT==1,-1]),sum(censor.CT==1),ncov),
-          xCC_o = matrix(as.matrix(data.CC[censor.CC==0,-1]),sum(censor.CC==0),ncov),
-          xEC_o = matrix(as.matrix(data.EC[censor.EC==0,-1]),sum(censor.EC==0),ncov),
-          xEC_c = matrix(as.matrix(data.EC[censor.EC==1,-1]),sum(censor.EC==1),ncov),
-          scale = method.borrow[[i]]$scale)
-
-        mcmc <- rstan::sampling(stanmodels$T2ENormalC0,
-                                data          = dat,
-                                chains        = chains,
-                                iter          = iter,
-                                warmup        = warmup,
-                                thin          = thin,
-                                show_messages = FALSE,
-                                cores         = 1,
-                                refresh       = 0)
-        mcmc.sample <- rstan::extract(mcmc)
-
+      mname <- method.borrow[[i]]$prior
+      if((mname=="noborrow")|(mname=="fullborrow")){
+        method.lab[i] <- mname
+      }else if((mname=="cauchy")|(mname=="normal")){
+        method.lab[i] <- paste(mname,method.borrow[[i]]$scale,sep="")
       }
 
+      stan.obj <- append(stan.obj,list(mcmc))
     }
 
-    loghr <- mcmc.sample$theta
+    colnames(reject) <- c("measure",method.lab)
+    colnames(theta)  <- c("measure",method.lab)
+    names(stan.obj)  <- method.lab
 
-    if(alternative=="greater"){
-      postprob <- mean(loghr>0)
-    }else if(alternative=="less"){
-      postprob <- mean(loghr<0)
-    }
-    cri <- quantile(loghr,c(sig.level,1-sig.level))
-
-    reject.v <- (postprob>(1-sig.level))
-    reject   <- data.frame(reject,X1=reject.v)
-
-    theta.v <- c(mean(loghr),median(loghr),sd(loghr),cri[[1]],cri[[2]])
-    theta   <- data.frame(theta,X1=theta.v)
-
-    mname <- method.borrow[[i]]$prior
-    if((mname=="noborrow")|(mname=="fullborrow")){
-      method.lab[i] <- mname
-    }else if((mname=="cauchy")|(mname=="normal")){
-      method.lab[i] <- paste(mname,method.borrow[[i]]$scale,sep="")
-    }
+    return(list(reject=reject,theta=theta,stan.obj=stan.obj))
   }
-
-  colnames(reject) <- c("measure",method.lab)
-  colnames(theta)  <- c("measure",method.lab)
-
-  return(list(reject=reject,theta=theta,method.lab=method.lab))
 }
