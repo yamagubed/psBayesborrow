@@ -32,61 +32,64 @@
 #' The default value is \code{alternative="greater"}.
 #' @param sig.level Significance level. The default value is
 #' \code{sig.level=0.025}.
+#' @param seed seed.
 #' @return
 #' \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 #' \item{theta}{Posterior mean, median, and sd of log hazard ratio.}
 #' @examples
-#'  n.CT       <- 100
-#'  n.CC       <- 50
-#'  nevent.C   <- 100
-#'  n.ECp      <- 1000
-#'  nevent.ECp <- 800
-#'  accrual    <- 16
+#' n.CT       <- 100
+#' n.CC       <- 50
+#' nevent.C   <- 100
+#' n.ECp      <- 1000
+#' nevent.ECp <- 800
+#' accrual    <- 16
 #'
-#'  out.mevent.CT <- 6
-#'  out.mevent.CC <- 6
-#'  driftHR       <- 1
+#' out.mevent.CT <- 6
+#' out.mevent.CC <- 6
+#' driftHR       <- 1
 #'
-#'  cov.C <- list(list(dist="norm",mean=0,sd=1),
+#' cov.C <- list(list(dist="norm",mean=0,sd=1),
+#'               list(dist="binom",prob=0.4))
+#'
+#' cov.cor.C <- rbind(c(  1,0.1),
+#'                    c(0.1,  1))
+#'
+#' cov.effect.C <- c(0.1,0.1)
+#'
+#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
 #'                list(dist="binom",prob=0.4))
 #'
-#'  cov.cor.C <- rbind(c(  1,0.1),
+#' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#'  cov.effect.C <- c(0.1,0.1)
+#' cov.effect.EC <- c(0.1,0.1)
 #'
-#'  cov.EC <- list(list(dist="norm",mean=0,sd=1),
-#'                 list(dist="binom",prob=0.4))
+#' indata <- trial.simulation.t2e(
+#'   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
+#'   n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
+#'   out.mevent.CT, out.mevent.CC, driftHR,
+#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
+#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 #'
-#'  cov.cor.EC <- rbind(c(  1,0.1),
-#'                      c(0.1,  1))
+#' n.EC <- 50
 #'
-#'  cov.effect.EC <- c(0.1,0.1)
+#' method.whomatch <- "conc.treat"
+#' method.matching <- "optimal"
+#' method.psorder  <- NULL
 #'
-#'  indata <- trial.simulation.t2e(
-#'    n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
-#'    n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
-#'    out.mevent.CT, out.mevent.CC, driftHR,
-#'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#' out.psmatch <- psmatch(
+#'   study~X1+X2, data=indata, n.EC=n.EC,
+#'   method.whomatch=method.whomatch, method.matching=method.matching,
+#'   method.psorder=method.psorder)
 #'
-#'  n.EC <- 50
+#' indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
 #'
-#'  method.whomatch <- "conc.treat"
-#'  method.matching <- "optimal"
-#'  method.psorder  <- NULL
+#' method.borrow <- list(list(prior="noborrow"),
+#'                       list(prior="fullborrow"),
+#'                       list(prior="cauchy",scale=2.0),
+#'                       list(prior="normal",scale=0.5))
 #'
-#'  out.psmatch <- psmatch(
-#'    study~X1+X2, data=indata, n.EC=n.EC,
-#'    method.whomatch=method.whomatch, method.matching=method.matching,
-#'    method.psorder=method.psorder)
-#'
-#'  indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
-#'
-#'  method.borrow <- list(list(prior="noborrow"),
-#'                        list(prior="normal",scale=0.5))
-#'
-#'  commensurate.t2e(Surv(time,status)~X1+X2,data=indata.match,method.borrow=method.borrow)
+#' commensurate.t2e(Surv(time,status)~X1+X2,data=indata.match,method.borrow=method.borrow)
 #' @import rstan survival
 #' @export
 

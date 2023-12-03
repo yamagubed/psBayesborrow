@@ -126,5 +126,5 @@ trial.simulation.cont <- function(
     data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1]),
     data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1]))
 
-  return(list(data=outdata,ncov=ncov))
+  return(outdata)
 }

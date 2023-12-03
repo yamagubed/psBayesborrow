@@ -5,11 +5,16 @@
 \title{Commensurate power prior: binary outcome}
 \usage{
 commensurate.bin(
-  indata, subjid.EC, method.borrow,
+  formula, data, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025)
+  alternative="greater", sig.level=0.025,
+  seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
+\item{formula}{formula.}
+
+\item{data}{data.}
+
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control
 data without discounting. \code{"cauchy"} uses the commensurate prior to
@@ -38,11 +43,7 @@ The default value is \code{alternative="greater"}.}
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
 
-\item{indata}{Dataset of a simulated trial, which is a data frame returned
-from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-\code{trial.simulation.cont}.}
-
-\item{subjid.EC}{Subject ID of external control.}
+\item{seed}{seed.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
@@ -53,9 +54,9 @@ Commensurate power prior is implemented. No borrowing and full borrowing are
 also implemented. The binary outcome is applicable.
 }
 \examples{
-n.CT       <- 100
-n.CC       <- 50
-n.ECp      <- 1000
+n.CT  <- 100
+n.CC  <- 50
+n.ECp <- 1000
 
 out.prob.CT <- 0.2
 out.prob.CC <- 0.2
@@ -90,15 +91,16 @@ method.matching <- "optimal"
 method.psorder  <- NULL
 
 out.psmatch <- psmatch(
-  indata=indata, n.EC=n.EC,
+  study~X1+X2, data=indata, n.EC=n.EC,
   method.whomatch=method.whomatch, method.matching=method.matching,
   method.psorder=method.psorder)
 
-subjid.EC <- out.psmatch$subjid.EC
+indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
 
 method.borrow <- list(list(prior="noborrow"),
+                      list(prior="fullborrow"),
+                      list(prior="cauchy",scale=2.0),
                       list(prior="normal",scale=0.5))
 
-commensurate.bin(
-  indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
+commensurate.bin(y~X1+X2,data=indata.match,method.borrow=method.borrow)
 }

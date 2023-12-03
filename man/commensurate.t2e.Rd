@@ -42,6 +42,8 @@ The default value is \code{alternative="greater"}.}
 
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
+
+\item{seed}{seed.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
@@ -93,15 +95,16 @@ method.matching <- "optimal"
 method.psorder  <- NULL
 
 out.psmatch <- psmatch(
-  indata=indata, n.EC=n.EC,
+  study~X1+X2, data=indata, n.EC=n.EC,
   method.whomatch=method.whomatch, method.matching=method.matching,
   method.psorder=method.psorder)
 
-subjid.EC <- out.psmatch$subjid.EC
+indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
 
 method.borrow <- list(list(prior="noborrow"),
+                      list(prior="fullborrow"),
+                      list(prior="cauchy",scale=2.0),
                       list(prior="normal",scale=0.5))
 
-commensurate.t2e(
-  indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow)
+commensurate.t2e(Surv(time,status)~X1+X2,data=indata.match,method.borrow=method.borrow)
 }

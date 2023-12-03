@@ -177,7 +177,7 @@ psborrow.t2e <- function(
       cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 
     out.psmatch <- psmatch(
-      indata=indata, n.EC=n.EC,
+      study~X1+X2, data=indata, n.EC=n.EC,
       method.psest=method.psest, method.pslink=method.pslink,
       method.whomatch=method.whomatch, method.matching=method.matching,
       method.psorder=method.psorder)
@@ -185,7 +185,7 @@ psborrow.t2e <- function(
     subjid.EC <- out.psmatch$subjid.EC
 
     out.commensurate <- commensurate.t2e(
-      indata=indata, subjid.EC=subjid.EC, method.borrow=method.borrow,
+      Surv(time,status)~X1+X2, data=indata, method.borrow=method.borrow,
       chains=chains, iter=iter, warmup=warmup, thin=thin,
       alternative=alternative, sig.level=sig.level)
 

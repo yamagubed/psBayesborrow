@@ -5,11 +5,15 @@
 \title{Propensity score matching}
 \usage{
 psmatch(
-  indata, n.EC,
-  method.psest="glm", method.pslink="logit",
-  method.whomatch, method.matching, method.psorder)
+    formula, data, n.EC,
+    method.psest="glm", method.pslink="logit",
+    method.whomatch, method.matching, method.psorder)
 }
 \arguments{
+\item{formula}{formula.}
+
+\item{data}{data.}
+
 \item{n.EC}{Number of patients in external control.}
 
 \item{method.psest}{Method of estimating the propensity score. Allowable
@@ -42,10 +46,6 @@ propensity score; \code{"smallest"}, where matching takes place in ascending
 order of propensity score; \code{"random"}, where matching takes place in a
 random order; \code{"data"}, where matching takes place based on the order
 of units in the data.}
-
-\item{indata}{Dataset of a simulated trial, which is a data frame returned
-from \code{trial.simulation.t2e}, \code{trial.simulation.bin}, or
-\code{trial.simulation.cont}.}
 }
 \value{
 \item{subjid.EC}{Subject ID of external control.}
@@ -97,7 +97,7 @@ method.matching <- "optimal"
 method.psorder  <- NULL
 
 psmatch(
-  indata=indata, n.EC=n.EC,
+  study~X1+X2, data=indata, n.EC=n.EC,
   method.whomatch=method.whomatch, method.matching=method.matching,
   method.psorder=method.psorder)
 }
