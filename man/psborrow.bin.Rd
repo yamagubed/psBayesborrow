@@ -5,16 +5,18 @@
 \title{Simulation study of hybrid control design with Bayesian dynamic borrowing
 incorporating propensity score matched external control: binary outcome}
 \usage{
-psborrow.bin(
+psborrow.bin <- function(
   n.CT, n.CC, n.ECp, n.EC,
   out.prob.CT, out.prob.CC, driftOR,
   cov.C, cov.cor.C, cov.effect.C,
   cov.EC, cov.cor.EC, cov.effect.EC,
+  psmatch.cov,
   method.psest="glm", method.pslink="logit",
-  method.whomatch, method.matching, method.psorder,
-  method.borrow,
+  method.whomatch, method.matching, method.psorder, n.boot=100,
+  analysis.cov, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-  alternative="greater", sig.level=0.025, nsim, seed=NULL)
+  alternative="greater", sig.level=0.025,
+  nsim, seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
 \item{n.CT}{Number of patients in concurrent treatment.}
@@ -50,6 +52,8 @@ covariate for external control, specified as Gaussian copula parameter.}
 \item{cov.effect.EC}{Vector of covariate effects for external control
 control, specified as hazard ratio.}
 
+\item{psmatch.cov}{psmatch.cov.}
+
 \item{method.psest}{Method of estimating the propensity score. Allowable
 options include, for example, \code{"glm"} for generalized linear model
 (e.g., logistic regression); \code{"gam"} for generalized additive model;
@@ -81,6 +85,10 @@ order of propensity score; \code{"random"}, where matching takes place in a
 random order; \code{"data"}, where matching takes place based on the order
 of units in the data.}
 
+\item{n.boot}{n.boot.}
+
+\item{analysis.cov}{analysis.cov.}
+
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control
 data without discounting. \code{"cauchy"} uses the commensurate prior to
@@ -111,7 +119,7 @@ The default value is \code{alternative="greater"}.}
 
 \item{nsim}{Number of simulated trials.}
 
-\item{seed}{Random seed. The default value is \code{seed=NULL}.}
+\item{seed}{Random seed.}
 }
 \value{
 \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
@@ -141,25 +149,29 @@ out.prob.CT <- 0.2
 out.prob.CC <- 0.2
 driftOR     <- 1.0
 
-cov.C <- list(list(dist="norm",mean=0,sd=1),
-              list(dist="binom",prob=0.4))
+cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+              list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
 cov.effect.C <- c(0.1,0.1)
 
-cov.EC <- list(list(dist="norm",mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+               list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
 
 cov.effect.EC <- c(0.1,0.1)
 
+psmatch.cov <- c("cov1","cov2")
+
 method.whomatch <- "conc.treat"
 method.matching <- "optimal"
 method.psorder  <- NULL
+
+analysis.cov <- c("cov1")
 
 method.borrow <- list(list(prior="noborrow"),
                       list(prior="normal",scale=0.5))
@@ -171,7 +183,8 @@ psborrow.bin(
   out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
-  method.whomatch=method.whomatch,
+  psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
   method.matching=method.matching, method.psorder=method.psorder,
-  method.borrow=method.borrow, nsim=nsim, seed=100)
+  analysis.cov=analysis.cov, method.borrow=method.borrow,
+  nsim=nsim, seed=100)
 }

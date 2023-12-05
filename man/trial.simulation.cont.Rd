@@ -69,16 +69,16 @@ out.sd.CC   <- 1
 driftdiff   <- 0
 out.sd.EC   <- 1
 
-cov.C <- list(list(dist="norm",mean=0,sd=1),
-              list(dist="binom",prob=0.4))
+cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+              list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
 cov.effect.C <- c(0.1,0.1)
 
-cov.EC <- list(list(dist="norm",mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+               list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))

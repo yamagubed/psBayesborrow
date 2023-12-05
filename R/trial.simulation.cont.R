@@ -47,16 +47,16 @@
 #' driftdiff   <- 0
 #' out.sd.EC   <- 1
 #'
-#' cov.C <- list(list(dist="norm",mean=0,sd=1),
-#'               list(dist="binom",prob=0.4))
+#' cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'               list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
 #' cov.effect.C <- c(0.1,0.1)
 #'
-#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
-#'                list(dist="binom",prob=0.4))
+#' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
@@ -85,6 +85,7 @@ trial.simulation.cont <- function(
   marg.EC <- NULL
   mean.C  <- NULL
   mean.EC <- NULL
+  cov.lab <- NULL
 
   for(i in 1:ncov){
     if(cov.C[[i]]$dist=="norm"){
@@ -93,12 +94,16 @@ trial.simulation.cont <- function(
 
       mean.C  <- c(mean.C, cov.C[[i]]$mean)
       mean.EC <- c(mean.EC,cov.EC[[i]]$mean)
+
+      cov.lab <- c(cov.lab,cov.C[[i]]$lab)
     }else if(cov.C[[i]]$dist=="binom"){
       marg.C  <- append(marg.C, list(list(dist=cov.C[[i]]$dist, parm=list(size=1,prob=cov.C[[i]]$prob))))
       marg.EC <- append(marg.EC,list(list(dist=cov.EC[[i]]$dist,parm=list(size=1,prob=cov.EC[[i]]$prob))))
 
       mean.C  <- c(mean.C, cov.C[[i]]$prob)
       mean.EC <- c(mean.EC,cov.EC[[i]]$prob)
+
+      cov.lab <- c(cov.lab,cov.C[[i]]$lab)
     }
   }
 
@@ -125,6 +130,8 @@ trial.simulation.cont <- function(
     data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1]),
     data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1]),
     data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1]))
+
+  colnames(outdata) <- c("study","treat","y",cov.lab)
 
   return(outdata)
 }

@@ -10,16 +10,18 @@
 #' available. No borrowing and full borrowing can also be implemented.
 #' The binary outcome is applicable.
 #' @usage
-#' psborrow.bin(
+#' psborrow.bin <- function(
 #'   n.CT, n.CC, n.ECp, n.EC,
 #'   out.prob.CT, out.prob.CC, driftOR,
 #'   cov.C, cov.cor.C, cov.effect.C,
 #'   cov.EC, cov.cor.EC, cov.effect.EC,
+#'   psmatch.cov,
 #'   method.psest="glm", method.pslink="logit",
-#'   method.whomatch, method.matching, method.psorder,
-#'   method.borrow,
+#'   method.whomatch, method.matching, method.psorder, n.boot=100,
+#'   analysis.cov, method.borrow,
 #'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-#'   alternative="greater", sig.level=0.025, nsim, seed=NULL)
+#'   alternative="greater", sig.level=0.025,
+#'   nsim, seed=sample.int(.Machine$integer.max,1))
 #' @param n.CT Number of patients in concurrent treatment.
 #' @param n.CC Number of patients in concurrent control.
 #' @param n.ECp Number of patients in external control pool.
@@ -40,6 +42,7 @@
 #' covariate for external control, specified as Gaussian copula parameter.
 #' @param cov.effect.EC Vector of covariate effects for external control
 #' control, specified as hazard ratio.
+#' @param psmatch.cov psmatch.cov.
 #' @param method.psest Method of estimating the propensity score. Allowable
 #' options include, for example, \code{"glm"} for generalized linear model
 #' (e.g., logistic regression); \code{"gam"} for generalized additive model;
@@ -66,6 +69,8 @@
 #' order of propensity score; \code{"random"}, where matching takes place in a
 #' random order; \code{"data"}, where matching takes place based on the order
 #' of units in the data.
+#' @param n.boot n.boot.
+#' @param analysis.cov analysis.cov.
 #' @param method.borrow List of information borrowing method. \code{"noborrow"}
 #' uses the concurrent data only. \code{"fullborrow"} uses the external control
 #' data without discounting. \code{"cauchy"} uses the commensurate prior to
@@ -88,7 +93,7 @@
 #' @param sig.level Significance level. The default value is
 #' \code{sig.level=0.025}.
 #' @param nsim Number of simulated trials.
-#' @param seed Random seed. The default value is \code{seed=NULL}.
+#' @param seed Random seed.
 #' @return
 #' \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
 #' \item{theta}{Posterior mean, median, and sd of log hazard ratio.}
@@ -107,25 +112,29 @@
 #' out.prob.CC <- 0.2
 #' driftOR     <- 1.0
 #'
-#' cov.C <- list(list(dist="norm",mean=0,sd=1),
-#'               list(dist="binom",prob=0.4))
+#' cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'               list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
 #' cov.effect.C <- c(0.1,0.1)
 #'
-#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
-#'                list(dist="binom",prob=0.4))
+#' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
 #' cov.effect.EC <- c(0.1,0.1)
 #'
+#' psmatch.cov <- c("cov1","cov2")
+#'
 #' method.whomatch <- "conc.treat"
 #' method.matching <- "optimal"
 #' method.psorder  <- NULL
+#'
+#' analysis.cov <- c("cov1")
 #'
 #' method.borrow <- list(list(prior="noborrow"),
 #'                       list(prior="normal",scale=0.5))
@@ -137,9 +146,10 @@
 #'   out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
 #'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
 #'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
-#'   method.whomatch=method.whomatch,
+#'   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
 #'   method.matching=method.matching, method.psorder=method.psorder,
-#'   method.borrow=method.borrow, nsim=nsim, seed=100)
+#'   analysis.cov=analysis.cov, method.borrow=method.borrow,
+#'   nsim=nsim, seed=100)
 #' @import overlapping
 #' @export
 
@@ -148,11 +158,13 @@ psborrow.bin <- function(
     out.prob.CT, out.prob.CC, driftOR,
     cov.C, cov.cor.C, cov.effect.C,
     cov.EC, cov.cor.EC, cov.effect.EC,
+    psmatch.cov,
     method.psest="glm", method.pslink="logit",
-    method.whomatch, method.matching, method.psorder,
-    method.borrow,
+    method.whomatch, method.matching, method.psorder, n.boot=100,
+    analysis.cov, method.borrow,
     chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-    alternative="greater", sig.level=0.025, nsim, seed=NULL)
+    alternative="greater", sig.level=0.025,
+    nsim, seed=sample.int(.Machine$integer.max,1))
 {
   reject <- NULL
   theta  <- NULL
@@ -168,40 +180,61 @@ psborrow.bin <- function(
       cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
       cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
 
+    f1 <- as.formula(paste("study~",paste(psmatch.cov,collapse="+"),sep=""))
+
     out.psmatch <- psmatch(
-      study~X1+X2, data=indata, n.EC=n.EC,
+      formula=f1, data=indata, n.EC=n.EC,
       method.psest=method.psest, method.pslink=method.pslink,
       method.whomatch=method.whomatch, method.matching=method.matching,
       method.psorder=method.psorder)
 
-    subjid.EC <- out.psmatch$subjid.EC
+    indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
+
+    f2 <- as.formula(paste("y~",paste(analysis.cov,collapse="+"),sep=""))
 
     out.commensurate <- commensurate.bin(
-      y~X1+X2, data=indata, method.borrow=method.borrow,
+      formula=f2, data=indata.match, method.borrow=method.borrow,
       chains=chains, iter=iter, warmup=warmup, thin=thin,
       alternative=alternative, sig.level=sig.level)
 
     reject <- rbind(reject,data.frame(sim=ss,out.commensurate$reject))
     theta  <- rbind(theta,data.frame(sim=ss,out.commensurate$theta))
 
-    data.cov.ps <- out.psmatch$data.cov.ps
+    data.ps <- out.psmatch$data.ps
 
-    Z1 <- data.cov.ps[(data.cov.ps$study==1)&(data.cov.ps$treat==1),]
-    Z2 <- rbind(data.cov.ps[(data.cov.ps$study==1)&(data.cov.ps$treat==0),],data.cov.ps[subjid.EC,])
+    Z1 <- data.ps[(data.ps$study==1)&(data.ps$treat==1),]
+    Z2 <- rbind(data.ps[(data.ps$study==1)&(data.ps$treat==0),],data.ps[out.psmatch$subjid.EC,])
 
     pslist <- list(Z1=Z1[,"ps"],Z2=Z2[,"ps"])
     ov.ps  <- (overlap(pslist,boundaries=c(0,1)))$OV
-    ov     <- rbind(ov,data.frame(sim=ss,factor="ps",type="continuous",ov=ov.ps))
+    ov     <- rbind(ov,data.frame(sim=ss,factor="ps",type="continuous",comparison="CTvsCC.EC",ov=ov.ps))
 
-    for(i in 1:(indata$ncov)){
-      tmp.cov <- paste("X",i,sep="")
-      pslist  <- list(Z1=Z1[,tmp.cov],Z2=Z2[,tmp.cov])
+    for(i in 1:length(psmatch.cov)){
+      covlist  <- list(Z1=Z1[,psmatch.cov[i]],Z2=Z2[,psmatch.cov[i]])
       if(cov.C[[i]]$dist=="norm"){
-        ov.cov <- (overlap(pslist))$OV
-        ov     <- rbind(ov,data.frame(sim=ss,factor=paste("cov",i,sep=""),type="continuous",ov=ov.cov))
+        ov.cov <- (overlap(covlist))$OV
+        ov     <- rbind(ov,data.frame(sim=ss,factor=psmatch.cov[i],type="continuous",comparison="CTvsCC.EC",ov=ov.cov))
       }else if(cov.C[[i]]$dist=="binom"){
-        ov.cov <- mean(pslist$Z1)-mean(pslist$Z2)
-        ov     <- rbind(ov,data.frame(sim=ss,factor=paste("cov",i,sep=""),type="binary",ov=ov.cov))
+        ov.cov <- mean(covlist$Z1)-mean(covlist$Z2)
+        ov     <- rbind(ov,data.frame(sim=ss,factor=psmatch.cov[i],type="binary",comparison="CTvsCC.EC",ov=ov.cov))
+      }
+    }
+
+    Z1 <- data.ps[(data.ps$study==1)&(data.ps$treat==0),]
+    Z2 <- data.ps[out.psmatch$subjid.EC,]
+
+    pslist <- list(Z1=Z1[,"ps"],Z2=Z2[,"ps"])
+    ov.ps  <- (overlap(pslist,boundaries=c(0,1)))$OV
+    ov     <- rbind(ov,data.frame(sim=ss,factor="ps",type="continuous",comparison="CCvsEC",ov=ov.ps))
+
+    for(i in 1:length(psmatch.cov)){
+      covlist  <- list(Z1=Z1[,psmatch.cov[i]],Z2=Z2[,psmatch.cov[i]])
+      if(cov.C[[i]]$dist=="norm"){
+        ov.cov <- (overlap(covlist))$OV
+        ov     <- rbind(ov,data.frame(sim=ss,factor=psmatch.cov[i],type="continuous",comparison="CCvsEC",ov=ov.cov))
+      }else if(cov.C[[i]]$dist=="binom"){
+        ov.cov <- mean(covlist$Z1)-mean(covlist$Z2)
+        ov     <- rbind(ov,data.frame(sim=ss,factor=psmatch.cov[i],type="binary",comparison="CCvsEC",ov=ov.cov))
       }
     }
   }
@@ -213,6 +246,5 @@ psborrow.bin <- function(
               true.theta=t.theta,
               method.psest=method.psest,method.pslink=method.pslink,
               method.whomatch=method.whomatch,
-              method.matching=method.matching,method.psorder=method.psorder,
-              method.borrow=out.commensurate$method.lab))
+              method.matching=method.matching,method.psorder=method.psorder))
 }

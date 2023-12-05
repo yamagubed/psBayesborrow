@@ -47,16 +47,16 @@
 #' out.mevent.CC <- 6
 #' driftHR       <- 1
 #'
-#' cov.C <- list(list(dist="norm",mean=0,sd=1),
-#'               list(dist="binom",prob=0.4))
+#' cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'               list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
 #' cov.effect.C <- c(0.1,0.1)
 #'
-#' cov.EC <- list(list(dist="norm",mean=0,sd=1),
-#'                list(dist="binom",prob=0.4))
+#' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+#'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
@@ -72,10 +72,10 @@
 #' @export
 
 trial.simulation.t2e <- function(
-    n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
-    out.mevent.CT, out.mevent.CC, driftHR,
-    cov.C, cov.cor.C, cov.effect.C,
-    cov.EC, cov.cor.EC, cov.effect.EC)
+  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
+  out.mevent.CT, out.mevent.CC, driftHR,
+  cov.C, cov.cor.C, cov.effect.C,
+  cov.EC, cov.cor.EC, cov.effect.EC)
 {
   ncov          <- length(cov.C)
   out.lambda.CT <- log(2)/out.mevent.CT
@@ -89,6 +89,7 @@ trial.simulation.t2e <- function(
   marg.EC <- NULL
   mean.C  <- NULL
   mean.EC <- NULL
+  cov.lab <- NULL
 
   for(i in 1:ncov){
     if(cov.C[[i]]$dist=="norm"){
@@ -97,12 +98,16 @@ trial.simulation.t2e <- function(
 
       mean.C  <- c(mean.C, cov.C[[i]]$mean)
       mean.EC <- c(mean.EC,cov.EC[[i]]$mean)
+
+      cov.lab <- c(cov.lab,cov.C[[i]]$lab)
     }else if(cov.C[[i]]$dist=="binom"){
       marg.C  <- append(marg.C, list(list(dist=cov.C[[i]]$dist, parm=list(size=1,prob=cov.C[[i]]$prob))))
       marg.EC <- append(marg.EC,list(list(dist=cov.EC[[i]]$dist,parm=list(size=1,prob=cov.EC[[i]]$prob))))
 
       mean.C  <- c(mean.C, cov.C[[i]]$prob)
       mean.EC <- c(mean.EC,cov.EC[[i]]$prob)
+
+      cov.lab <- c(cov.lab,cov.C[[i]]$lab)
     }
   }
 
@@ -183,6 +188,8 @@ trial.simulation.t2e <- function(
     data.frame(study=1,treat=1,time=data.CT[,1], status=1-censor.CT, data.CT[,-1]),
     data.frame(study=1,treat=0,time=data.CC[,1], status=1-censor.CC, data.CC[,-1]),
     data.frame(study=0,treat=0,time=data.ECp[,1],status=1-censor.ECp,data.ECp[,-1]))
+
+  colnames(outdata) <- c("study","treat","time","status",cov.lab)
 
   return(outdata)
 }

@@ -65,16 +65,16 @@ out.sd.CC   <- 1
 driftdiff   <- 0
 out.sd.EC   <- 1
 
-cov.C <- list(list(dist="norm",mean=0,sd=1),
-              list(dist="binom",prob=0.4))
+cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+              list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
 cov.effect.C <- c(0.1,0.1)
 
-cov.EC <- list(list(dist="norm",mean=0,sd=1),
-               list(dist="binom",prob=0.4))
+cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
+               list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
@@ -96,7 +96,7 @@ method.matching <- "optimal"
 method.psorder  <- NULL
 
 out.psmatch <- psmatch(
-  study~X1+X2, data=indata, n.EC=n.EC,
+  study~cov1+cov2, data=indata, n.EC=n.EC,
   method.whomatch=method.whomatch, method.matching=method.matching,
   method.psorder=method.psorder)
 
@@ -107,5 +107,5 @@ method.borrow <- list(list(prior="noborrow"),
                       list(prior="cauchy",scale=2.0),
                       list(prior="normal",scale=0.5))
 
-commensurate.cont(y~X1+X2,data=indata.match,method.borrow=method.borrow)
+commensurate.cont(y~cov1,data=indata.match,method.borrow=method.borrow)
 }
