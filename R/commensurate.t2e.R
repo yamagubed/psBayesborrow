@@ -1,25 +1,34 @@
 
-#' Commensurate power prior: time-to-event outcome
+#' Bayesian analysis with commensurate prior for time-to-event outcome
 #'
-#' Commensurate power prior is implemented. No borrowing and full borrowing are
-#' also implemented. The time-to-event outcome is applicable.
+#' Bayesian analysis for time-to-event outcome is implemented via MCMC, where a
+#' commensurate prior is used for incorporating data from external controls.
+#' No borrowing and full borrowing are also applicable.
 #' @usage
 #' commensurate.t2e(
 #'   formula, data, method.borrow,
 #'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
 #'   alternative="greater", sig.level=0.025,
 #'   seed=sample.int(.Machine$integer.max,1))
-#' @param formula formula.
-#' @param data data.
+#' @param formula Object of class \code{formula}, which is a symbolic
+#' description of the model to be fitted. The dependent variable must be an
+#' object of class \code{Surv}. The explanatory variables only include
+#' covariates of interest, which must be specified in the form of linear
+#' combination.
+#' @param data Data frame, which must have variables named \code{study} for
+#' study indicator (0 for external control, and 1 for current trial) and
+#' \code{treat} for treatment indicator (0 for concurrent and external control,
+#' and 1 for treatment).
 #' @param method.borrow List of information borrowing method. \code{"noborrow"}
 #' uses the concurrent data only. \code{"fullborrow"} uses the external control
 #' data without discounting. \code{"cauchy"} uses the commensurate prior to
-#' dynamically borrow the external control data, and the commensurate parameter
-#' is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
-#' commensurate prior to dynamically borrow the external control data, and the
-#' commensurate parameter is assumed to follow half-normal distribution.
-#' \code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-#' half-Cauchy and half-normal distribution respectively.
+#' dynamically borrow the external control data, and the commensurability
+#' parameter is assumed to follow a half-Cauchy distribution. \code{"normal"}
+#' uses the commensurate prior to dynamically borrow the external control data,
+#' and the commensurability parameter is assumed to follow a half-normal
+#' distribution. \code{"cauchy"} and \code{"normal"} require to specify the
+#' scale parameter \code{scale} of half-Cauchy and half-normal distribution
+#' respectively.
 #' @param chains Number of Markov chains in MCMC sampling. The default value is
 #' \code{chains=2}.
 #' @param iter Number of iterations for each chain (including warmup) in MCMC
@@ -32,16 +41,34 @@
 #' The default value is \code{alternative="greater"}.
 #' @param sig.level Significance level. The default value is
 #' \code{sig.level=0.025}.
-#' @param seed seed.
+#' @param seed Setting a seed for MCMC sampling.
+#' @details The time to event outcome is assumed to follow a Weibull
+#' distribution. Given more than one covariates, a Weibull proportional
+#' hazards model is built and its Bayesian estimation is performed via
+#' MCMC. Commensurate prior is used to dynamically discount the information to
+#' be borrowed from external control based on the similarity between the current
+#' trial and external controls, where the commensurability parameter determines
+#' the extent of borrowing. The commensurability parameter is assumed to follow
+#' a half-cauchy or a half-normal distribution, and its scale parameter needs to
+#' be carefully specified. No borrowing approach is to perform the analysis
+#' without incorporating the external controls. Full borrowing approach is just
+#' to pool the concurrent and external controls, which is used as a comparator
+#' in the analysis.
 #' @return
-#' \item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
-#' \item{theta}{Posterior mean, median, and sd of log hazard ratio.}
+#' The \code{commensurate.t2e} returns a list containing the following objects:
+#' \item{reject}{Data frame containing results of Bayesian one-sided hypothesis
+#' testing (whether or not the posterior probability that the log hazard ratio
+#' is greater or less than 0 exceeds 1 minus significance level): \code{TRUE}
+#' when significant, otherwise \code{FALSE}.}
+#' \item{theta}{Data frame containing posterior mean, median, and sd of log
+#' hazard ratio.}
+#' \item{stan.obj}{Stanfit object.}
 #' @examples
 #' n.CT       <- 100
 #' n.CC       <- 50
 #' nevent.C   <- 100
-#' n.ECp      <- 1000
-#' nevent.ECp <- 800
+#' n.ECp      <- 200
+#' nevent.ECp <- 180
 #' accrual    <- 16
 #'
 #' out.mevent.CT <- 6
@@ -54,7 +81,7 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.1,0.1)
+#' cov.effect.C <- c(0.9,0.9)
 #'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
@@ -62,7 +89,7 @@
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.1,0.1)
+#' cov.effect.EC <- c(0.9,0.9)
 #'
 #' indata <- trial.simulation.t2e(
 #'   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
@@ -84,14 +111,13 @@
 #'
 #' indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
 #'
-#' method.borrow <- list(list(prior="noborrow"),
-#'                       list(prior="fullborrow"),
-#'                       list(prior="cauchy",scale=2.0),
+#' method.borrow <- list(list(prior="cauchy",scale=2.0),
 #'                       list(prior="normal",scale=0.5))
 #'
 #' commensurate.t2e(
-#'   Surv(time,status)~cov1+cov2,data=indata.match,method.borrow=method.borrow)
-#' @import rstan survival
+#'   survival::Surv(time,status)~cov1+cov2,data=indata.match,
+#'   method.borrow=method.borrow,chains=1,iter=100)
+#' @import rstan survival stats
 #' @export
 
 commensurate.t2e <- function(
@@ -100,9 +126,9 @@ commensurate.t2e <- function(
   alternative="greater", sig.level=0.025,
   seed=sample.int(.Machine$integer.max,1))
 {
-  mf      <- model.frame(formula=formula,data=data)
+  mf      <- stats::model.frame(formula=formula,data=data)
   cov.lab <- attr(attr(mf,"terms"),"term.labels")
-  y       <- model.response(mf)
+  y       <- stats::model.response(mf)
 
   if(!survival::is.Surv(y)){
     stop("Outcome must be Surv class.")
@@ -286,12 +312,12 @@ commensurate.t2e <- function(
       }else if(alternative=="less"){
         postprob <- mean(loghr<0)
       }
-      cri <- quantile(loghr,c(sig.level,1-sig.level))
+      cri <- stats::quantile(loghr,c(sig.level,1-sig.level))
 
       reject.v <- (postprob>(1-sig.level))
       reject   <- data.frame(reject,X1=reject.v)
 
-      theta.v <- c(mean(loghr),median(loghr),sd(loghr),cri[[1]],cri[[2]])
+      theta.v <- c(mean(loghr),stats::median(loghr),stats::sd(loghr),cri[[1]],cri[[2]])
       theta   <- data.frame(theta,X1=theta.v)
 
       mname <- method.borrow[[i]]$prior

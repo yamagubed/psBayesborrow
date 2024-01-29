@@ -1,11 +1,19 @@
 Package: psBayesborrow
-Title: Propensity score-based Bayesian information borrowing for hybrid control design
-Version: 0.0.0.9000
-Authors@R: 
-    person("Yusuke", "Yamaguchi", , "yamagubed@gmail.com", role = c("aut", "cre"))
-Description: Propensity score-based Bayesian information borrowing for hybrid control design.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Version: 1.0.0
+Title: Hybrid Control Design with Commensurate Prior Constructed using Propensity Score-Matched External Controls
+Authors@R: c(
+    person(given  = "Yusuke",
+           family = "Yamaguchi",
+           role   = c("aut","cre"),
+           email  = "yamagubed@gmail.com"),
+    person(given  = "Kentaro",
+           family = "Takeda",
+           role   = c("aut")),
+    person(given  = "Jun",
+           family = "Takeda",
+           role   = c("aut")))
+Description: Hybrid control design is a way to borrow information from external controls to augment concurrent controls in a randomized controlled trial (RCT) and is expected to overcome the feasibility issue when adequate RCTs cannot be conducted. A major challenge in the hybrid control design is its inability to eliminate a prior-data conflict caused by systematic imbalances in measured or unmeasured confounders between patients in the concurrent treatment/control group and external controls. To prevent the prior-data conflict, a combined use of propensity score matching and Bayesian commensurate prior has been proposed in the context of hybrid control design. The propensity score matching is first performed to guarantee the balance in baseline characteristics, and then the Bayesian commensurate prior is constructed while discounting the information based on the similarity in outcomes between the concurrent and external controls. 'psBayesborrow' is a package to implement the propensity score matching and the Bayesian analysis with commensurate prior, as well as to conduct a simulation study to assess operating characteristics of the hybrid control design, where users can choose design parameters in flexible and straightforward ways depending on their own application.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -22,10 +30,13 @@ Imports:
     boot,
     MatchIt,
     dplyr,
-    survival,
     optmatch,
+    survival,
     e1071,
-    overlapping
+    overlapping,
+    stats
+Suggests: 
+    testthat (>= 3.0.0)
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),

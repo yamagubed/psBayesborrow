@@ -5,7 +5,8 @@
 #' @usage
 #' psborrow.summary(object)
 #' @param object List of simulation results.
-#' @import dplyr
+#' @import stats
+#' @rawNamespace import(dplyr,except=c(lag,filter))
 #' @export
 psborrow.summary <- function(object)
 {
@@ -16,7 +17,7 @@ psborrow.summary <- function(object)
 
   rrate    <- apply(reject[,colflg],2,mean)
   bias     <- apply(theta[theta$measure=="mean",colflg]-t.theta,2,mean)
-  empsd    <- apply(theta[theta$measure=="mean",colflg],2,sd)
+  empsd    <- apply(theta[theta$measure=="mean",colflg],2,stats::sd)
   modsd    <- apply(theta[theta$measure=="sd",colflg],2,mean)
   empmodsd <- empsd/modsd
   covprob  <- apply((theta[theta$measure=="lcri",colflg]<t.theta)*(theta[theta$measure=="ucri",colflg]>t.theta),2,mean)

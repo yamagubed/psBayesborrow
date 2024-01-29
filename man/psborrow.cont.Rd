@@ -12,53 +12,74 @@ psborrow.cont(
   cov.EC, cov.cor.EC, cov.effect.EC,
   psmatch.cov,
   method.psest="glm", method.pslink="logit",
-  method.whomatch, method.matching, method.psorder,
+  method.whomatch, method.matching, method.psorder, n.boot=100,
   analysis.cov, method.borrow,
   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
   alternative="greater", sig.level=0.025,
   nsim, seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
-\item{n.CT}{Number of patients in concurrent treatment.}
+\item{n.CT}{Number of patients in treatment group in the current trial.}
 
-\item{n.CC}{Number of patients in concurrent control.}
+\item{n.CC}{Number of patients in concurrent control group in the current
+trial.}
 
 \item{n.ECp}{Number of patients in external control pool.}
 
 \item{n.EC}{Number of patients in external control.}
 
-\item{out.mean.CT}{True mean of outcome in concurrent treatment.}
+\item{out.mean.CT}{True mean of outcome in treatment group in the current
+trial.}
 
-\item{out.sd.CT}{True sd of outcome in concurrent treatment.}
+\item{out.sd.CT}{True sd of outcome in treatment group in the current trial.}
 
-\item{out.mean.CC}{True mean of outcome in concurrent control.}
+\item{out.mean.CC}{True mean of outcome in concurrent control group in the
+current trial.}
 
-\item{out.sd.CC}{True as of outcome in concurrent control.}
+\item{out.sd.CC}{True as of outcome in concurrent control group in the
+current trial.}
 
-\item{driftdiff}{Difference between external control and concurrent control
+\item{driftdiff}{Mean difference between concurrent and external control
 for which the bias should be plotted.}
 
 \item{out.sd.EC}{True as of outcome in external control.}
 
-\item{cov.C}{List of covariate distributions for concurrent treatment and
-control.}
+\item{cov.C}{List of covariate distributions for treatment and concurrent
+control group in the current trial. Continuous and binary covariate are
+applicable. The continuous covariate is assumed to follow a normal
+distribution; for example specified as
+\code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary covariate is
+assumed to follow a binomial distribution; for example, specified as
+\code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is the column
+name of the covariate in the data frame generated.}
 
 \item{cov.cor.C}{Matrix of correlation coefficients for each pair of
-covariate for concurrent treatment and control, specified as Gaussian copula
-parameter.}
+covariate for treatment and concurrent control group in the current trial,
+specified as Gaussian copula parameter.}
 
-\item{cov.effect.C}{Vector of covariate effects for concurrent treatment and
-control, specified as hazard ratio.}
+\item{cov.effect.C}{Vector of covariate effects on the outcome for treatment
+and concurrent control group in the current trial, specified as mean change
+per one unit increase in continuous covariates or as mean change between
+categories for binary covariates.}
 
-\item{cov.EC}{List of covariate distributions for external control.}
+\item{cov.EC}{List of covariate distributions for external control. The
+continuous covariate is assumed to follow a normal distribution; for example,
+specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
+covariate is assumed to follow a binomial distribution; for example,
+specified as \code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is
+the column name of the covariate in the data frame generated, which must be
+consistent with those used for \code{cov.C}.}
 
 \item{cov.cor.EC}{Matrix of correlation coefficients for each pair of
 covariate for external control, specified as Gaussian copula parameter.}
 
-\item{cov.effect.EC}{Vector of covariate effects for external control
-control, specified as hazard ratio.}
+\item{cov.effect.EC}{Vector of covariate effects on the outcome for external
+control, specified as mean change per one unit increase in continuous
+covariates or as mean change between categories for binary covariates.}
 
-\item{psmatch.cov}{psmatch.cov.}
+\item{psmatch.cov}{Vector of names of covariates which are used for the
+propensity score matching. The names of covariates must be included in
+\code{lab} values specified in \code{cov.C}.}
 
 \item{method.psest}{Method of estimating the propensity score. Allowable
 options include, for example, \code{"glm"} for generalized linear model
@@ -74,36 +95,57 @@ The default value is \code{method.pslink="logit"}, which, along with
 regression.}
 
 \item{method.whomatch}{Options of who to match. Allowable options include
-\code{conc.contl} matching concurrent control to external control pool;
-\code{conc.treat} matching concurrent treatment to external control pool;
-\code{conc.all} matching concurrent treatment plus concurrent control to
-external control pool; \code{treat2contl} matching concurrent treatment to
-concurrent control plus external control pool.}
+\code{conc.contl} for matching concurrent control to external control pool;
+\code{conc.treat} for matching treatment to external control pool;
+\code{conc.all} for matching treatment plus concurrent control to external
+control pool; \code{treat2contl} for matching treatment to concurrent control
+plus external control pool.}
 
 \item{method.matching}{Matching method. Allowable options include
 \code{"optimal"} for optimal matching; \code{"nearest"} for nearest neighbor
-matching without replacement.}
+matching without replacement; \code{"med.optimal"} for equally splitting
+patients in the current trial and taking the median of each subset, followed
+by 1:1 optimal matching; \code{"med.nearest"} for equally splitting
+patients in the current trial and taking the median of each subset, followed
+by 1:1 nearest neighbor matching without replacement; \code{"km.optimal"} for
+k-means clustering of patients in the current trial, followed by 1:1 optimal
+matching; \code{"km.nearest"} for k-means clustering of patients in the
+current trial, followed by 1:1 nearest neighbor matching without replacement;
+\code{"cm.optimal"} for fuzzy c-means clustering of patients in the current
+trial, followed by 1:1 optimal matching; \code{"cm.nearest"} for fuzzy
+c-means of patients in the current trial, followed by 1:1 nearest neighbor
+matching without replacement; \code{"boot.optimal"} for bootstrap sampling
+from patients in the current trial, followed by 1:1 optimal matching;
+\code{"boot.nearest"} for bootstrap sampling from patient in the current
+trial, followed by 1:1 nearest neighbor matching without replacement.}
 
-\item{method.psorder}{Order that the matching takes place. Allowable options
-include \code{"largest"}, where matching takes place in descending order of
-propensity score; \code{"smallest"}, where matching takes place in ascending
-order of propensity score; \code{"random"}, where matching takes place in a
-random order; \code{"data"}, where matching takes place based on the order
-of units in the data.}
+\item{method.psorder}{Order that the matching takes place when a nearest
+neighbor matching is used. Allowable options include \code{"largest"},
+where matching takes place in descending order of propensity score;
+\code{"smallest"}, where matching takes place in ascending order of
+propensity score; \code{"random"}, where matching takes place in a random
+order; \code{"data"}, where matching takes place based on the order of units
+in the data. The matching order must be specified when using the nearest
+neighbor matching.}
 
-\item{n.boot}{n.boot.}
+\item{n.boot}{Number of bootstrap sampling, which must be specified when
+\code{method.matching="boot.optimal"} or
+\code{method.matching="boot.nearest"}. The default value is \code{n.boot=100}.}
 
-\item{analysis.cov}{analysis.cov.}
+\item{analysis.cov}{Vector of names of covariates which are used for the
+Bayesian analysis with commensurate prior. The names of covariates must be
+included in \code{lab} values specified in \code{cov.C}.}
 
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control
 data without discounting. \code{"cauchy"} uses the commensurate prior to
-dynamically borrow the external control data, and the commensurate parameter
-is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
-commensurate prior to dynamically borrow the external control data, and the
-commensurate parameter is assumed to follow half-normal distribution.
-\code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-half-Cauchy and half-normal distribution respectively.}
+dynamically borrow the external control data, and the commensurability
+parameter is assumed to follow a half-Cauchy distribution. \code{"normal"}
+uses the commensurate prior to dynamically borrow the external control data,
+and the commensurability parameter is assumed to follow a half-normal
+distribution. \code{"cauchy"} and \code{"normal"} require to specify the
+scale parameter \code{scale} of half-Cauchy and half-normal distribution
+respectively.}
 
 \item{chains}{Number of Markov chains in MCMC sampling. The default value is
 \code{chains=2}.}
@@ -125,30 +167,52 @@ The default value is \code{alternative="greater"}.}
 
 \item{nsim}{Number of simulated trials.}
 
-\item{seed}{Random seed.}
+\item{seed}{Setting a seed.}
 }
 \value{
-\item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
-\item{theta}{Posterior mean, median, and sd of log hazard ratio.}
-\item{ov.ps}{Overlapping coefficient of propensity score between concurrent
-treatment and concurrent/external control}
-\item{ov.cov}{Overlapping coefficient of continuous covariate and difference
-of proportion of binary covariate between concurrent treatment and
-concurrent/external control}
+The \code{psborrow.cont} returns a list containing the following objects:
+\item{reject}{Data frame containing results of Bayesian one-sided hypothesis
+testing (whether or not the posterior probability that the mean difference
+is greater or less than 0 exceeds 1 minus significance level): \code{TRUE}
+when significant, otherwise \code{FALSE}.}
+\item{theta}{Data frame containing posterior mean, median, and sd of mean
+difference.}
+\item{ov}{Data frame containing overlapping coefficient of propensity score
+densities between treatment versus concurrent control plus external control}
+\item{n.CT}{Number of patients in treatment group in the current trial.}
+\item{n.CC}{Number of patients in concurrent control group in the current
+trial.}
+\item{n.ECp}{Number of patients in external control pool.}
+\item{n.EC}{Number of patients in external control.}
+\item{drift}{Mean difference between concurrent and external control.}
+\item{true.theta}{True mean difference}
+\item{method.psest}{Method of estimating the propensity score.}
+\item{method.pslink}{Link function used in estimating the propensity score.}
+\item{method.whomatch}{Option of who to match.}
+\item{method.matching}{Propensity score matching method.}
+\item{method.psorder}{Order that the matching takes place when a nearest
+neighbor matching is used.}
 }
 \description{
-Bayesian dynamic borrowing is implemented for clinical trials with hybrid
-control design, where the concurrent control is augmented by external
-control. The external control is selected from external control pool using
-propensity score matching. Commensurate power prior is used for Bayesian
-dynamic borrowing, and half-normal or half-Cauchy commensurate prior is
-available. No borrowing and full borrowing can also be implemented.
-The continuous outcome is applicable.
+Simulation study is conducted to assess operating characteristics of hybrid
+control design with Bayesian dynamic borrowing, where the concurrent control
+is augmented by external control. The external controls are selected from
+external control pool using a propensity score matching. Commensurate power
+prior is used for Bayesian dynamic borrowing. The continuous outcome is
+applicable.
+}
+\details{
+The simulation study consists of three part: data generation
+conducted by \code{trial.simulation.cont} function, propensity score matching
+conducted by \code{psmatch} function, and Bayesian analysis with commensurate
+prior conducted by \code{commensurate.cont} function. Users can specify
+different sets of covariates for the propensity score matching and the
+Bayesian analysis.
 }
 \examples{
 n.CT       <- 100
 n.CC       <- 50
-n.ECp      <- 1000
+n.ECp      <- 200
 n.EC       <- 50
 
 out.mean.CT <- 0
@@ -197,5 +261,5 @@ psborrow.cont(
   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
   method.matching=method.matching, method.psorder=method.psorder,
   analysis.cov=analysis.cov, method.borrow=method.borrow,
-  nsim=nsim, seed=100)
+  chains=1, iter=100, nsim=nsim, seed=100)
 }

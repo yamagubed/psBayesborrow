@@ -9,8 +9,8 @@
 #' @param margdist List of distributions to be used for the data generation.
 #' @param corvec Vector of Gaussian copula correlation parameter.
 #' @param nsim Number of simulation.
-#' @return Data having the specified distribution.
-#' @import copula
+#' @return Data drawn from a multivariate distribution specified.
+#' @rawNamespace import(copula,except=c(profile,logLik,confint,coef))
 #' @export
 
 datagen <- function(margdist,corvec,nsim)

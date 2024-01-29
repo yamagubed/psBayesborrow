@@ -2,7 +2,7 @@
 % Please edit documentation in R/trial.simulation.t2e.R
 \name{trial.simulation.t2e}
 \alias{trial.simulation.t2e}
-\title{Simulating a trial with time-to-event outcome}
+\title{Simulating time-to-event data for current trial and external control}
 \usage{
 trial.simulation.t2e(
  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
@@ -11,51 +11,87 @@ trial.simulation.t2e(
  cov.EC, cov.cor.EC, cov.effect.EC)
 }
 \arguments{
-\item{n.CT}{Number of patients in concurrent treatment.}
+\item{n.CT}{Number of patients in treatment group in the current trial.}
 
-\item{n.CC}{Number of patients in concurrent control.}
+\item{n.CC}{Number of patients in concurrent control group in the current
+trial.}
 
-\item{nevent.C}{Number of events in concurrent treatment and control.}
+\item{nevent.C}{Number of events in treatment and concurrent control group
+in the current trial.}
 
 \item{n.ECp}{Number of patients in external control pool.}
 
 \item{nevent.ECp}{Number of events in external control pool.}
 
-\item{accrual}{Accrual rate (number of enrolled patients per month).}
+\item{accrual}{Accrual rate, defined as the number of enrolled patients per
+month.}
 
-\item{out.mevent.CT}{True median time to event in concurrent treatment.}
+\item{out.mevent.CT}{True median time to event in treatment group in the
+current trial.}
 
-\item{out.mevent.CC}{True median time to event in concurrent control.}
+\item{out.mevent.CC}{True median time to event in concurrent control group
+in the current trial.}
 
 \item{driftHR}{Hazard ratio between concurrent and external control for
 which the bias should be plotted.}
 
-\item{cov.C}{List of covariate distributions for concurrent treatment and
-control.}
+\item{cov.C}{List of covariate distributions for treatment and concurrent
+control group in the current trial. Continuous and binary covariate are
+applicable. The continuous covariate is assumed to follow a normal
+distribution; for example, specified as
+\code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary covariate is
+assumed to follow a binomial distribution; for example, specified as
+\code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is the column
+name of the covariate in the data frame generated.}
 
 \item{cov.cor.C}{Matrix of correlation coefficients for each pair of
-covariate for concurrent treatment and control, specified as Gaussian copula
-parameter.}
+covariate for treatment and concurrent control group in the current trial,
+specified as Gaussian copula parameter.}
 
-\item{cov.effect.C}{Vector of covariate effects for concurrent treatment and
-control, specified as hazard ratio.}
+\item{cov.effect.C}{Vector of covariate effects on the outcome for treatment
+and concurrent control group in the current trial, specified as hazard ratio
+per one unit increase in continuous covariates or as hazard ratio between
+categories for binary covariates.}
 
-\item{cov.EC}{List of covariate distributions for external control.}
+\item{cov.EC}{List of covariate distributions for external control. The
+continuous covariate is assumed to follow a normal distribution; for example,
+specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
+covariate is assumed to follow a binomial distribution; for example,
+specified as \code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is
+the column name of the covariate in the data frame generated, which must be
+consistent with those used for \code{cov.C}.}
 
 \item{cov.cor.EC}{Matrix of correlation coefficients for each pair of
 covariate for external control, specified as Gaussian copula parameter.}
 
-\item{cov.effect.EC}{Vector of covariate effects for external control
-control, specified as hazard ratio.}
+\item{cov.effect.EC}{Vector of covariate effects on the outcome for external
+control, specified as hazard ratio per one unit increase in continuous
+covariates or as hazard ratio between categories for binary covariates.}
 }
 \value{
-\item{outdata}{Dataset of a simulated trial.}
-\item{ncov}{Number of covariate.}
+The \code{trial.simulation.t2e} returns a data frame containing the
+following variables:
+\item{study}{Study indicator (0 for external control, and 1 for current
+trial)}
+\item{treat}{Treatment indicator (0 for concurrent and external control, and
+1 for treatment)}
+\item{time}{Time to event or censoring}
+\item{status}{Censoring (0 for censored, and 1 for event occurred)}
+\item{column name specified}{Covariate of interest}
 }
 \description{
-A trial with time-to-event outcome is simulated. The data returned include
-the time to event of interest, an indicator of censoring, and covariate for
-patients in concurrent treatment and control, and external control pool.
+A two-arm randomized clinical trial with a time-to-event outcome, which is
+augmented by external control data, is simulated.
+}
+\details{
+The time to event outcome is assumed to follow a Weibull
+distribution. Given more than one covariates with their effects on the
+outcome, a Weibull proportional hazards model is constructed for data
+generation. The data frame generated include the time-to-event outcome data
+and covariates for \code{n.CT} and \code{n.CC} patients in treatment and
+concurrent control group in the current trial respectively, and \code{n.ECp}
+patients in external control pool. One record per patient. More than one
+covariates must be specified.
 }
 \examples{
 n.CT       <- 100
@@ -75,7 +111,7 @@ cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
-cov.effect.C <- c(0.1,0.1)
+cov.effect.C <- c(0.8,0.8)
 
 cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
                list(dist="binom",prob=0.4,lab="cov2"))
@@ -83,7 +119,7 @@ cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
 
-cov.effect.EC <- c(0.1,0.1)
+cov.effect.EC <- c(0.8,0.8)
 
 trial.simulation.t2e(
    n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,

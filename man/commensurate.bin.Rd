@@ -2,7 +2,7 @@
 % Please edit documentation in R/commensurate.bin.R
 \name{commensurate.bin}
 \alias{commensurate.bin}
-\title{Commensurate power prior: binary outcome}
+\title{Bayesian analysis with commensurate prior for binary outcome}
 \usage{
 commensurate.bin(
   formula, data, method.borrow,
@@ -11,19 +11,26 @@ commensurate.bin(
   seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
-\item{formula}{formula.}
+\item{formula}{Object of class \code{formula}, which is a symbolic
+description of the model to be fitted. The explanatory variables only include
+covariates of interest, which must be specified in the form of linear
+combination.}
 
-\item{data}{data.}
+\item{data}{Data frame, which must have variables named \code{study} for
+study indicator (0 for external control, and 1 for current trial) and
+\code{treat} for treatment indicator (0 for concurrent and external control,
+and 1 for treatment).}
 
 \item{method.borrow}{List of information borrowing method. \code{"noborrow"}
 uses the concurrent data only. \code{"fullborrow"} uses the external control
 data without discounting. \code{"cauchy"} uses the commensurate prior to
-dynamically borrow the external control data, and the commensurate parameter
-is assumed to follow half-Cauchy distribution. \code{"normal"} uses the
-commensurate prior to dynamically borrow the external control data, and the
-commensurate parameter is assumed to follow half-normal distribution.
-\code{"cauchy"} and \code{"normal"} require to specify the scale parameter of
-half-Cauchy and half-normal distribution respectively.}
+dynamically borrow the external control data, and the commensurability
+parameter is assumed to follow a half-Cauchy distribution. \code{"normal"}
+uses the commensurate prior to dynamically borrow the external control data,
+and the commensurability parameter is assumed to follow a half-normal
+distribution. \code{"cauchy"} and \code{"normal"} require to specify the
+scale parameter \code{scale} of half-Cauchy and half-normal distribution
+respectively.}
 
 \item{chains}{Number of Markov chains in MCMC sampling. The default value is
 \code{chains=2}.}
@@ -43,20 +50,41 @@ The default value is \code{alternative="greater"}.}
 \item{sig.level}{Significance level. The default value is
 \code{sig.level=0.025}.}
 
-\item{seed}{seed.}
+\item{seed}{Setting a seed for MCMC sampling.}
 }
 \value{
-\item{reject}{\code{TRUE} when significant; otherwise \code{FALSE}.}
-\item{theta}{Posterior mean, median, and sd of log odds ratio.}
+The \code{commensurate.cont} returns a list containing the following objects:
+\item{reject}{Data frame containing results of Bayesian one-sided hypothesis
+testing (whether or not the posterior probability that the log odds ratio
+is greater or less than 0 exceeds 1 minus significance level): \code{TRUE}
+when significant, otherwise \code{FALSE}.}
+\item{theta}{Data frame containing posterior mean, median, and sd of log
+odds ratio.}
+\item{stan.obj}{Stanfit object.}
 }
 \description{
-Commensurate power prior is implemented. No borrowing and full borrowing are
-also implemented. The binary outcome is applicable.
+Bayesian analysis for binary outcome is implemented via MCMC, where a
+commensurate prior is used for incorporating data from external controls.
+No borrowing and full borrowing are also applicable.
+}
+\details{
+The binary outcome is assumed to follow a binomial distribution.
+Given more than one covariates, a logistic regression model is built
+and its Bayesian estimation is performed via MCMC. Commensurate prior is used
+to dynamically discount the information to be borrowed from external control
+based on the similarity between the current trial and external controls,
+where the commensurability parameter determines the extent of borrowing. The
+commensurability parameter is assumed to follow a half-cauchy or a
+half-normal distribution, and its scale parameter needs to be carefully
+specified. No borrowing approach is to perform the analysis without
+incorporating the external controls. Full borrowing approach is just to pool
+the concurrent and external controls, which is used as a comparator in the
+analysis.
 }
 \examples{
 n.CT  <- 100
 n.CC  <- 50
-n.ECp <- 1000
+n.ECp <- 200
 
 out.prob.CT <- 0.2
 out.prob.CC <- 0.2
@@ -68,7 +96,7 @@ cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
-cov.effect.C <- c(0.1,0.1)
+cov.effect.C <- c(0.9,0.9)
 
 cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
                list(dist="binom",prob=0.4,lab="cov2"))
@@ -76,7 +104,7 @@ cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
 
-cov.effect.EC <- c(0.1,0.1)
+cov.effect.EC <- c(0.9,0.9)
 
 indata <- trial.simulation.bin(
   n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
@@ -97,10 +125,8 @@ out.psmatch <- psmatch(
 
 indata.match <- rbind(indata[indata$study==1,],indata[out.psmatch$subjid.EC,])
 
-method.borrow <- list(list(prior="noborrow"),
-                      list(prior="fullborrow"),
-                      list(prior="cauchy",scale=2.0),
+method.borrow <- list(list(prior="cauchy",scale=2.0),
                       list(prior="normal",scale=0.5))
 
-commensurate.bin(y~cov1,data=indata.match,method.borrow=method.borrow)
+commensurate.bin(y~cov1,data=indata.match,method.borrow=method.borrow,chains=1,iter=100)
 }

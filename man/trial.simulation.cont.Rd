@@ -2,7 +2,7 @@
 % Please edit documentation in R/trial.simulation.cont.R
 \name{trial.simulation.cont}
 \alias{trial.simulation.cont}
-\title{Simulating a trial with continuous outcome}
+\title{Simulating continuous data for current trial and external control}
 \usage{
 trial.simulation.cont(
  n.CT, n.CC, n.ECp,
@@ -11,51 +11,84 @@ trial.simulation.cont(
  cov.EC, cov.cor.EC, cov.effect.EC)
 }
 \arguments{
-\item{n.CT}{Number of patients in concurrent treatment.}
+\item{n.CT}{Number of patients in treatment group in the current trial.}
 
-\item{n.CC}{Number of patients in concurrent control.}
+\item{n.CC}{Number of patients in concurrent control group in the current
+trial.}
 
 \item{n.ECp}{Number of patients in external control pool.}
 
-\item{out.mean.CT}{True mean of outcome in concurrent treatment.}
+\item{out.mean.CT}{True mean of outcome in treatment group in the current
+trial.}
 
-\item{out.sd.CT}{True sd of outcome in concurrent treatment.}
+\item{out.sd.CT}{True sd of outcome in treatment group in the current trial.}
 
-\item{out.mean.CC}{True mean of outcome in concurrent control.}
+\item{out.mean.CC}{True mean of outcome in concurrent control group in the
+current trial.}
 
-\item{out.sd.CC}{True as of outcome in concurrent control.}
+\item{out.sd.CC}{True sd of outcome in concurrent control group in the
+current trial.}
 
-\item{driftdiff}{Difference between external control and concurrent control
+\item{driftdiff}{Mean difference between concurrent and external control
 for which the bias should be plotted.}
 
-\item{out.sd.EC}{True as of outcome in external control.}
+\item{out.sd.EC}{True sd of outcome in external control.}
 
-\item{cov.C}{List of covariate distributions for concurrent treatment and
-control.}
+\item{cov.C}{List of covariate distributions for treatment and concurrent
+control group in the current trial. Continuous and binary covariate are
+applicable. The continuous covariate is assumed to follow a normal
+distribution; for example specified as
+\code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary covariate is
+assumed to follow a binomial distribution; for example, specified as
+\code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is the column
+name of the covariate in the data frame generated.}
 
 \item{cov.cor.C}{Matrix of correlation coefficients for each pair of
-covariate for concurrent treatment and control, specified as Gaussian copula
-parameter.}
+covariate for treatment and concurrent control group in the current trial,
+specified as Gaussian copula parameter.}
 
-\item{cov.effect.C}{Vector of covariate effects for concurrent treatment and
-control, specified as hazard ratio.}
+\item{cov.effect.C}{Vector of covariate effects on the outcome for treatment
+and concurrent control group in the current trial, specified as mean change
+per one unit increase in continuous covariates or as mean change between
+categories for binary covariates.}
 
-\item{cov.EC}{List of covariate distributions for external control.}
+\item{cov.EC}{List of covariate distributions for external control. The
+continuous covariate is assumed to follow a normal distribution; for example,
+specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
+covariate is assumed to follow a binomial distribution; for example,
+specified as \code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is
+the column name of the covariate in the data frame generated, which must be
+consistent with those used for \code{cov.C}.}
 
 \item{cov.cor.EC}{Matrix of correlation coefficients for each pair of
 covariate for external control, specified as Gaussian copula parameter.}
 
-\item{cov.effect.EC}{Vector of covariate effects for external control
-control, specified as hazard ratio.}
+\item{cov.effect.EC}{Vector of covariate effects on the outcome for external
+control, specified as mean change per one unit increase in continuous
+covariates or as mean change between categories for binary covariates.}
 }
 \value{
-\item{outdata}{Dataset of a simulated trial.}
-\item{ncov}{Number of covariate.}
+The \code{trial.simulation.cont} returns a data frame containing the
+following variables:
+\item{study}{Study indicator (0 for external control, and 1 for current
+trial)}
+\item{treat}{Treatment indicator (0 for concurrent and external control, and
+1 for treatment)}
+\item{y}{Continuous outcome}
+\item{column name specified}{Covariate of interest}
 }
 \description{
-A trial with continuous outcome is simulated. The data returned include
-the time to event of interest, an indicator of censoring, and covariate for
-patients in concurrent treatment and control, and external control pool.
+A two-arm randomized clinical trial with a continuous outcome, which is
+augmented by external control data, is simulated.
+}
+\details{
+The continuous outcome is assumed to follow a normal distribution.
+Given more than one covariates with their effects on the outcome, a normal
+linear regression model is constructed for data generation. The data frame
+generated include the continuous outcome data and covariates for \code{n.CT}
+and \code{n.CC} patients in treatment and concurrent control group in the
+current trial respectively, and \code{n.ECp} patients in external control
+pool. One record per patient. More than one covariates must be specified.
 }
 \examples{
 n.CT       <- 100

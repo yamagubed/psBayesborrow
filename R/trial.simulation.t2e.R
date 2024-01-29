@@ -1,40 +1,74 @@
 
-#' Simulating a trial with time-to-event outcome
+#' Simulating time-to-event data for current trial and external control
 #'
-#' A trial with time-to-event outcome is simulated. The data returned include
-#' the time to event of interest, an indicator of censoring, and covariate for
-#' patients in concurrent treatment and control, and external control pool.
+#' A two-arm randomized clinical trial with a time-to-event outcome, which is
+#' augmented by external control data, is simulated.
 #' @usage
 #' trial.simulation.t2e(
 #'  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
 #'  out.mevent.CT, out.mevent.CC, driftHR,
 #'  cov.C, cov.cor.C, cov.effect.C,
 #'  cov.EC, cov.cor.EC, cov.effect.EC)
-#' @param n.CT Number of patients in concurrent treatment.
-#' @param n.CC Number of patients in concurrent control.
-#' @param nevent.C Number of events in concurrent treatment and control.
+#' @param n.CT Number of patients in treatment group in the current trial.
+#' @param n.CC Number of patients in concurrent control group in the current
+#' trial.
+#' @param nevent.C Number of events in treatment and concurrent control group
+#' in the current trial.
 #' @param n.ECp Number of patients in external control pool.
 #' @param nevent.ECp Number of events in external control pool.
-#' @param accrual Accrual rate (number of enrolled patients per month).
-#' @param out.mevent.CT True median time to event in concurrent treatment.
-#' @param out.mevent.CC True median time to event in concurrent control.
+#' @param accrual Accrual rate, defined as the number of enrolled patients per
+#' month.
+#' @param out.mevent.CT True median time to event in treatment group in the
+#' current trial.
+#' @param out.mevent.CC True median time to event in concurrent control group
+#' in the current trial.
 #' @param driftHR Hazard ratio between concurrent and external control for
 #' which the bias should be plotted.
-#' @param cov.C List of covariate distributions for concurrent treatment and
-#' control.
+#' @param cov.C List of covariate distributions for treatment and concurrent
+#' control group in the current trial. Continuous and binary covariate are
+#' applicable. The continuous covariate is assumed to follow a normal
+#' distribution; for example, specified as
+#' \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary covariate is
+#' assumed to follow a binomial distribution; for example, specified as
+#' \code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is the column
+#' name of the covariate in the data frame generated.
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
-#' covariate for concurrent treatment and control, specified as Gaussian copula
-#' parameter.
-#' @param cov.effect.C Vector of covariate effects for concurrent treatment and
-#' control, specified as hazard ratio.
-#' @param cov.EC List of covariate distributions for external control.
+#' covariate for treatment and concurrent control group in the current trial,
+#' specified as Gaussian copula parameter.
+#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
+#' and concurrent control group in the current trial, specified as hazard ratio
+#' per one unit increase in continuous covariates or as hazard ratio between
+#' categories for binary covariates.
+#' @param cov.EC List of covariate distributions for external control. The
+#' continuous covariate is assumed to follow a normal distribution; for example,
+#' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
+#' covariate is assumed to follow a binomial distribution; for example,
+#' specified as \code{list(dist="binom", prob=0.4, lab="cov2")}. \code{lab} is
+#' the column name of the covariate in the data frame generated, which must be
+#' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects for external control
-#' control, specified as hazard ratio.
+#' @param cov.effect.EC Vector of covariate effects on the outcome for external
+#' control, specified as hazard ratio per one unit increase in continuous
+#' covariates or as hazard ratio between categories for binary covariates.
+#' @details The time to event outcome is assumed to follow a Weibull
+#' distribution. Given more than one covariates with their effects on the
+#' outcome, a Weibull proportional hazards model is constructed for data
+#' generation. The data frame generated include the time-to-event outcome data
+#' and covariates for \code{n.CT} and \code{n.CC} patients in treatment and
+#' concurrent control group in the current trial respectively, and \code{n.ECp}
+#' patients in external control pool. One record per patient. More than one
+#' covariates must be specified.
 #' @return
-#' \item{outdata}{Dataset of a simulated trial.}
-#' \item{ncov}{Number of covariate.}
+#' The \code{trial.simulation.t2e} returns a data frame containing the
+#' following variables:
+#' \item{study}{Study indicator (0 for external control, and 1 for current
+#' trial)}
+#' \item{treat}{Treatment indicator (0 for concurrent and external control, and
+#' 1 for treatment)}
+#' \item{time}{Time to event or censoring}
+#' \item{status}{Censoring (0 for censored, and 1 for event occurred)}
+#' \item{column name specified}{Covariate of interest}
 #' @examples
 #' n.CT       <- 100
 #' n.CC       <- 50
@@ -53,7 +87,7 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.1,0.1)
+#' cov.effect.C <- c(0.8,0.8)
 #'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
@@ -61,7 +95,7 @@
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.1,0.1)
+#' cov.effect.EC <- c(0.8,0.8)
 #'
 #' trial.simulation.t2e(
 #'    n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
@@ -69,6 +103,7 @@
 #'    out.mevent.CT, out.mevent.CC, driftHR,
 #'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
 #'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#' @import stats
 #' @export
 
 trial.simulation.t2e <- function(
@@ -126,9 +161,9 @@ trial.simulation.t2e <- function(
   sigma.CC  <- exp(int.C         +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect.C)}))
   sigma.ECp <- exp(int.EC        +apply(data.cov.ECp,1,function(x){sum(x*lcov.effect.EC)}))
 
-  data.CT  <- cbind(rweibull(n.CT, shape=1,scale=sigma.CT), data.cov.CT)
-  data.CC  <- cbind(rweibull(n.CC, shape=1,scale=sigma.CC), data.cov.CC)
-  data.ECp <- cbind(rweibull(n.ECp,shape=1,scale=sigma.ECp),data.cov.ECp)
+  data.CT  <- cbind(stats::rweibull(n.CT, shape=1,scale=sigma.CT), data.cov.CT)
+  data.CC  <- cbind(stats::rweibull(n.CC, shape=1,scale=sigma.CC), data.cov.CC)
+  data.ECp <- cbind(stats::rweibull(n.ECp,shape=1,scale=sigma.ECp),data.cov.ECp)
 
   enroll.period.C <- floor((n.CT+n.CC)/accrual)
   mn.CT <- floor(n.CT/enroll.period.C)
@@ -139,11 +174,11 @@ trial.simulation.t2e <- function(
   for(i in 1:enroll.period.C){
     e.st <- i-1
     e.en <- i
-    enroll.time.CT <- c(enroll.time.CT,runif(mn.CT,e.st,e.en))
-    enroll.time.CC <- c(enroll.time.CC,runif(mn.CC,e.st,e.en))
+    enroll.time.CT <- c(enroll.time.CT,stats::runif(mn.CT,e.st,e.en))
+    enroll.time.CC <- c(enroll.time.CC,stats::runif(mn.CC,e.st,e.en))
   }
-  enroll.time.CT <- c(enroll.time.CT,runif(n.CT-length(enroll.time.CT),enroll.period.C,enroll.period.C+1))
-  enroll.time.CC <- c(enroll.time.CC,runif(n.CC-length(enroll.time.CC),enroll.period.C,enroll.period.C+1))
+  enroll.time.CT <- c(enroll.time.CT,stats::runif(n.CT-length(enroll.time.CT),enroll.period.C,enroll.period.C+1))
+  enroll.time.CC <- c(enroll.time.CC,stats::runif(n.CC-length(enroll.time.CC),enroll.period.C,enroll.period.C+1))
 
   enroll.period.ECp <- floor(n.ECp/accrual)
 
@@ -151,9 +186,9 @@ trial.simulation.t2e <- function(
   for(i in 1:enroll.period.ECp){
     e.st <- i-1
     e.en <- i
-    enroll.time.ECp <- c(enroll.time.ECp,runif(accrual,e.st,e.en))
-    }
-  enroll.time.ECp <- c(enroll.time.ECp,runif(n.ECp-length(enroll.time.ECp),enroll.period.ECp,enroll.period.ECp+1))
+    enroll.time.ECp <- c(enroll.time.ECp,stats::runif(accrual,e.st,e.en))
+  }
+  enroll.time.ECp <- c(enroll.time.ECp,stats::runif(n.ECp-length(enroll.time.ECp),enroll.period.ECp,enroll.period.ECp+1))
 
   obs.time.CT  <- data.CT[,1] +enroll.time.CT
   obs.time.CC  <- data.CC[,1] +enroll.time.CC

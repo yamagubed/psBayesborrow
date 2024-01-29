@@ -14,7 +14,7 @@ datagen(margdist, corvec, nsim)
 \item{nsim}{Number of simulation.}
 }
 \value{
-Data having the specified distribution.
+Data drawn from a multivariate distribution specified.
 }
 \description{
 Multivariate correlated data are generated. Gaussian copula is used to

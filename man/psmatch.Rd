@@ -5,16 +5,24 @@
 \title{Propensity score matching}
 \usage{
 psmatch(
-    formula, data, n.EC,
-    method.psest="glm", method.pslink="logit",
-    method.whomatch, method.matching, method.psorder)
+  formula, data, n.EC,
+  method.psest="glm", method.pslink="logit",
+  method.whomatch, method.matching, method.psorder, n.boot=100)
 }
 \arguments{
-\item{formula}{formula.}
+\item{formula}{Object of class \code{formula}, which is a symbolic
+description of the propensity score model to be fitted. The dependent
+variable must be named \code{study}. The explanatory variables only include
+covariates of interest, which must be specified in the form of linear
+combination.}
 
-\item{data}{data.}
+\item{data}{Data frame, which must contain variables named \code{study} for
+study indicator (0 for external control, and 1 for current trial) and
+\code{treat} for treatment indicator (0 for concurrent and external control,
+and 1 for treatment).}
 
-\item{n.EC}{Number of patients in external control.}
+\item{n.EC}{Number of patients in external control to be selected, which must
+be smaller than the number of patients in external control pool.}
 
 \item{method.psest}{Method of estimating the propensity score. Allowable
 options include, for example, \code{"glm"} for generalized linear model
@@ -30,30 +38,89 @@ The default value is \code{method.pslink="logit"}, which, along with
 regression.}
 
 \item{method.whomatch}{Options of who to match. Allowable options include
-\code{conc.contl} matching concurrent control to external control pool;
-\code{conc.treat} matching concurrent treatment to external control pool;
-\code{conc.all} matching concurrent treatment plus concurrent control to
-external control pool; \code{treat2contl} matching concurrent treatment to
-concurrent control plus external control pool.}
+\code{conc.contl} for matching concurrent control to external control pool;
+\code{conc.treat} for matching treatment to external control pool;
+\code{conc.all} for matching treatment plus concurrent control to external
+control pool; \code{treat2contl} for matching treatment to concurrent control
+plus external control pool.}
 
-\item{method.matching}{Matching method. Allowable options include
+\item{method.matching}{Propensity score matching method. Allowable options include
 \code{"optimal"} for optimal matching; \code{"nearest"} for nearest neighbor
-matching without replacement.}
+matching without replacement; \code{"med.optimal"} for equally splitting
+patients in the current trial and taking the median of each subset, followed
+by 1:1 optimal matching; \code{"med.nearest"} for equally splitting
+patients in the current trial and taking the median of each subset, followed
+by 1:1 nearest neighbor matching without replacement; \code{"km.optimal"} for
+k-means clustering of patients in the current trial, followed by 1:1 optimal
+matching; \code{"km.nearest"} for k-means clustering of patients in the
+current trial, followed by 1:1 nearest neighbor matching without replacement;
+\code{"cm.optimal"} for fuzzy c-means clustering of patients in the current
+trial, followed by 1:1 optimal matching; \code{"cm.nearest"} for fuzzy
+c-means of patients in the current trial, followed by 1:1 nearest neighbor
+matching without replacement; \code{"boot.optimal"} for bootstrap sampling
+from patients in the current trial, followed by 1:1 optimal matching;
+\code{"boot.nearest"} for bootstrap sampling from patient in the current
+trial, followed by 1:1 nearest neighbor matching without replacement.}
 
-\item{method.psorder}{Order that the matching takes place. Allowable options
-include \code{"largest"}, where matching takes place in descending order of
-propensity score; \code{"smallest"}, where matching takes place in ascending
-order of propensity score; \code{"random"}, where matching takes place in a
-random order; \code{"data"}, where matching takes place based on the order
-of units in the data.}
+\item{method.psorder}{Order that the matching takes place when a nearest
+neighbor matching is used. Allowable options include \code{"largest"},
+where matching takes place in descending order of propensity score;
+\code{"smallest"}, where matching takes place in ascending order of
+propensity score; \code{"random"}, where matching takes place in a random
+order; \code{"data"}, where matching takes place based on the order of units
+in the data. The matching order must be specified when using the nearest
+neighbor matching.}
+
+\item{n.boot}{Number of bootstrap sampling, which must be specified when
+\code{method.matching="boot.optimal"} or
+\code{method.matching="boot.nearest"}. The default value is \code{n.boot=100}.}
 }
 \value{
-\item{subjid.EC}{Subject ID of external control.}
-\item{data.cov.ps}{Dataset of a simulated trial with estimated propensity
-score.}
+The \code{psmatch} returns a list containing the following objects:
+\item{subjid.EC}{Vector of subject ID of external control.}
+\item{data.ps}{Data frame with estimated propensity score.}
 }
 \description{
-Propensity score matching is implemented using methods specified.
+Propensity score matching is implemented to select external controls who are
+more relevant to patients in the current trial with respect to covariates
+of interest.
+}
+\details{
+The propensity score is defined as the conditional probability of
+having been included in the current trial given observed covariates. There
+are four options applicable for to whom the patients in external control
+pool are matched, including (i) concurrent control versus external control
+pool (\code{"conc.contl"}), (ii) treatment versus external control pool
+(\code{"conc.treat"}), (iii) treatment plus concurrent control versus
+external control pool (\code{"conc.all"}), and (iv) treatment versus
+concurrent control plus external control pool (\code{"treat2contl"}).
+Along with \code{method.whomatch="conc.contl"}, two 1:1 matching methods are
+applicable: (1) optimal matching (\code{"optimal"}), and (2) nearest neighbor
+matching without caliper (\code{"nearest"}). Along with
+\code{method.whomatch="conc.treat"} or \code{method.whomatch="conc.all"},
+ten matching methods are applicable: (1) optimal matching, where 1:1
+matching is first done, followed by random sampling (\code{"optimal"}),
+(2) nearest neighbor matching, where caliper is tuned iteratively
+to obtain the fixed number of external controls (\code{"nearest"}), (3)
+equally splitting patients in the current trial and taking the median of
+each subset, followed by 1:1 optimal matching (\code{"medm.optimal"}), (4)
+equally splitting patients in the current trial and taking the median of
+each subset, followed by 1:1 nearest neighbor matching matching
+(\code{"med.nearest"}), (5) k-means clustering of patients in the current
+trial, followed by 1:1 optimal matching (\code{"km.optimal"}), (6) k-means
+clustering of patients in the current trial, followed by 1:1 nearest neighbor
+matching (\code{"km.nearest"}), (7) fuzzy c-means clustering of patients in
+the current trial, followed by 1:1 optimal matching (\code{"cm.optimal"}),
+(8) fuzzy c-means of patients in the current trial, followed by 1:1 nearest
+neighbor matching (\code{"cm.nearest"}), (9) bootstrap sampling from patients
+in the current trial, followed by 1:1 optimal matching
+(\code{"boot.nearest"}), and (10) bootstrap sampling from patient in the
+current trial, followed by 1:1 nearest neighbor matching
+(\code{"boot.nearest"}). Along with \code{method.whomatch="treat2contl"},
+two matching methods are applicable: (1) optimal matching, followed by
+random sampling (\code{"optimal"}), and (2) nearest neighbor matching, where
+caliper is tuned iteratively to obtain the fixed number of external controls
+(\code{"nearest"}).
 }
 \examples{
 n.CT       <- 100
