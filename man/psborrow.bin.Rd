@@ -8,8 +8,7 @@ incorporating propensity score matched external control: binary outcome}
 psborrow.bin(
   n.CT, n.CC, n.ECp, n.EC,
   out.prob.CT, out.prob.CC, driftOR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.EC, cov.cor.EC, cov.effect.EC,
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
   psmatch.cov,
   method.psest="glm", method.pslink="logit",
   method.whomatch, method.matching, method.psorder, n.boot=100,
@@ -50,11 +49,6 @@ name of the covariate in the data frame generated.}
 covariate for treatment and concurrent control group in the current trial,
 specified as Gaussian copula parameter.}
 
-\item{cov.effect.C}{Vector of covariate effects on the outcome for treatment
-and concurrent control group in the current trial, specified as odds ratio
-per one unit increase in continuous covariates or as odds ratio between
-categories for binary covariates.}
-
 \item{cov.EC}{List of covariate distributions for external control. The
 continuous covariate is assumed to follow a normal distribution; for example,
 specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -66,9 +60,9 @@ consistent with those used for \code{cov.C}.}
 \item{cov.cor.EC}{Matrix of correlation coefficients for each pair of
 covariate for external control, specified as Gaussian copula parameter.}
 
-\item{cov.effect.EC}{Vector of covariate effects on the outcome for external
-control, specified as odds ratio per one unit increase in continuous
-covariates or as odds ratio between categories for binary covariates.}
+\item{cov.effect}{Vector of covariate effects on the outcome, specified as
+odds ratio per one unit increase in continuous covariates or as odds ratio
+between categories for binary covariates.}
 
 \item{psmatch.cov}{Vector of names of covariates which are used for the
 propensity score matching. The names of covariates must be included in
@@ -203,10 +197,10 @@ different sets of covariates for the propensity score matching and the
 Bayesian analysis.
 }
 \examples{
-n.CT       <- 100
-n.CC       <- 50
-n.ECp      <- 200
-n.EC       <- 50
+n.CT  <- 100
+n.CC  <- 50
+n.ECp <- 200
+n.EC  <- 50
 
 out.prob.CT <- 0.2
 out.prob.CC <- 0.2
@@ -218,15 +212,13 @@ cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
-cov.effect.C <- c(0.9,0.9)
-
 cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
                list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
 
-cov.effect.EC <- c(0.9,0.9)
+cov.effect <- c(0.9,0.9)
 
 psmatch.cov <- c("cov1","cov2")
 
@@ -244,8 +236,8 @@ nsim <- 5
 psborrow.bin(
   n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp, n.EC=n.EC,
   out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
-  cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
+  cov.C=cov.C, cov.cor.C=cov.cor.C,
+  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect,
   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
   method.matching=method.matching, method.psorder=method.psorder,
   analysis.cov=analysis.cov, method.borrow=method.borrow,

@@ -11,3 +11,13 @@ A DESCRIPTION OF THE PACKAGE
 \references{
 Stan Development Team (NA). RStan: the R interface to Stan. R package version 2.26.13. https://mc-stan.org
 }
+\author{
+\strong{Maintainer}: Yusuke Yamaguchi \email{yamagubed@gmail.com}
+
+Authors:
+\itemize{
+  \item Kentaro Takeda
+  \item Jun Takeda
+}
+
+}

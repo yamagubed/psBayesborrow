@@ -7,8 +7,7 @@
 #' trial.simulation.t2e(
 #'  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
 #'  out.mevent.CT, out.mevent.CC, driftHR,
-#'  cov.C, cov.cor.C, cov.effect.C,
-#'  cov.EC, cov.cor.EC, cov.effect.EC)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -35,10 +34,6 @@
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
 #' covariate for treatment and concurrent control group in the current trial,
 #' specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
-#' and concurrent control group in the current trial, specified as hazard ratio
-#' per one unit increase in continuous covariates or as hazard ratio between
-#' categories for binary covariates.
 #' @param cov.EC List of covariate distributions for external control. The
 #' continuous covariate is assumed to follow a normal distribution; for example,
 #' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -48,9 +43,9 @@
 #' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects on the outcome for external
-#' control, specified as hazard ratio per one unit increase in continuous
-#' covariates or as hazard ratio between categories for binary covariates.
+#' @param cov.effect Vector of covariate effects on the outcome , specified as
+#' hazard ratio per one unit increase in continuous covariates or as hazard
+#' ratio between categories for binary covariates.
 #' @details The time to event outcome is assumed to follow a Weibull
 #' distribution. Given more than one covariates with their effects on the
 #' outcome, a Weibull proportional hazards model is constructed for data
@@ -87,38 +82,33 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.8,0.8)
-#'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.8,0.8)
+#' cov.effect <- c(0.8,0.8)
 #'
 #' trial.simulation.t2e(
 #'    n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
 #'    n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
 #'    out.mevent.CT, out.mevent.CC, driftHR,
-#'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#'    cov.C=cov.C, cov.cor.C=cov.cor.C,
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 #' @import stats
 #' @export
 
 trial.simulation.t2e <- function(
   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
   out.mevent.CT, out.mevent.CC, driftHR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.EC, cov.cor.EC, cov.effect.EC)
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 {
   ncov          <- length(cov.C)
   out.lambda.CT <- log(2)/out.mevent.CT
   out.lambda.CC <- log(2)/out.mevent.CC
-  out.lambda.EC <- out.lambda.CC*driftHR
 
-  lcov.effect.C  <- (-log(cov.effect.C))
-  lcov.effect.EC <- (-log(cov.effect.EC))
+  lcov.effect  <- (-log(cov.effect))
 
   marg.C  <- NULL
   marg.EC <- NULL
@@ -146,8 +136,7 @@ trial.simulation.t2e <- function(
     }
   }
 
-  int.C   <- log(1/out.lambda.CC)-sum(mean.C*lcov.effect.C)
-  int.EC  <- log(1/out.lambda.EC)-sum(mean.EC*lcov.effect.EC)
+  int.C   <- log(1/out.lambda.CC)-sum(mean.C*lcov.effect)
   t.theta <- log(out.lambda.CC/out.lambda.CT)
 
   cvec.C  <- cov.cor.C[lower.tri(cov.cor.C)]
@@ -157,9 +146,9 @@ trial.simulation.t2e <- function(
   data.cov.CC  <- datagen(margdist=marg.C, corvec=cvec.C, nsim=n.CC)
   data.cov.ECp <- datagen(margdist=marg.EC,corvec=cvec.EC,nsim=n.ECp)
 
-  sigma.CT  <- exp(int.C +t.theta+apply(data.cov.CT, 1,function(x){sum(x*lcov.effect.C)}))
-  sigma.CC  <- exp(int.C         +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect.C)}))
-  sigma.ECp <- exp(int.EC        +apply(data.cov.ECp,1,function(x){sum(x*lcov.effect.EC)}))
+  sigma.CT  <- exp(int.C+t.theta             +apply(data.cov.CT, 1,function(x){sum(x*lcov.effect)}))
+  sigma.CC  <- exp(int.C                     +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect)}))
+  sigma.ECp <- exp(int.C        +log(driftHR)+apply(data.cov.ECp,1,function(x){sum(x*lcov.effect)}))
 
   data.CT  <- cbind(stats::rweibull(n.CT, shape=1,scale=sigma.CT), data.cov.CT)
   data.CC  <- cbind(stats::rweibull(n.CC, shape=1,scale=sigma.CC), data.cov.CC)

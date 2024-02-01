@@ -12,8 +12,7 @@
 #' psborrow.t2e(
 #'   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, n.EC, accrual,
 #'   out.mevent.CT, out.mevent.CC, driftHR,
-#'   cov.C, cov.cor.C, cov.effect.C,
-#'   cov.EC, cov.cor.EC, cov.effect.EC,
+#'   cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
 #'   psmatch.cov,
 #'   method.psest="glm", method.pslink="logit",
 #'   method.whomatch, method.matching, method.psorder, n.boot=100,
@@ -48,10 +47,6 @@
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
 #' covariate for treatment and concurrent control group in the current trial,
 #' specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
-#' and concurrent control group in the current trial, specified as hazard ratio
-#' per one unit increase in continuous covariates or as hazard ratio between
-#' categories for binary covariates.
 #' @param cov.EC List of covariate distributions for external control. The
 #' continuous covariate is assumed to follow a normal distribution; for example,
 #' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -61,9 +56,9 @@
 #' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects on the outcome for external
-#' control, specified as hazard ratio per one unit increase in continuous
-#' covariate or as hazard ratio between categories for binary covariate.
+#' @param cov.effect Vector of covariate effects on the outcome, specified as
+#' hazard ratio per one unit increase in continuous covariate or as hazard
+#' ratio between categories for binary covariate.
 #' @param psmatch.cov Vector of names of covariates which are used for the
 #' propensity score matching. The names of covariates must be included in
 #' \code{lab} values specified in \code{cov.C}.
@@ -187,15 +182,13 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.9,0.9)
-#'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.9,0.9)
+#' cov.effect <- c(0.9,0.9)
 #'
 #' psmatch.cov <- c("cov1","cov2")
 #'
@@ -214,8 +207,8 @@
 #'   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
 #'   n.ECp=n.ECp, nevent.ECp=nevent.ECp, n.EC=n.EC, accrual=accrual,
 #'   out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
-#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
+#'   cov.C=cov.C, cov.cor.C=cov.cor.C,
+#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect,
 #'   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
 #'   method.matching=method.matching, method.psorder=method.psorder,
 #'   analysis.cov=analysis.cov, method.borrow=method.borrow,
@@ -226,8 +219,7 @@
 psborrow.t2e <- function(
   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, n.EC, accrual,
   out.mevent.CT, out.mevent.CC, driftHR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.EC, cov.cor.EC, cov.effect.EC,
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
   psmatch.cov,
   method.psest="glm", method.pslink="logit",
   method.whomatch, method.matching, method.psorder, n.boot=100,
@@ -248,8 +240,8 @@ psborrow.t2e <- function(
       n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
       n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
       out.mevent.CT=out.mevent.CT, out.mevent.CC=out.mevent.CC, driftHR=driftHR,
-      cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-      cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+      cov.C=cov.C, cov.cor.C=cov.cor.C,
+      cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 
     f1 <- stats::as.formula(paste("study~",paste(psmatch.cov,collapse="+"),sep=""))
 

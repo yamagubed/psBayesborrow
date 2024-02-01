@@ -7,8 +7,7 @@
 #' trial.simulation.cont(
 #'  n.CT, n.CC, n.ECp,
 #'  out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-#'  cov.C, cov.cor.C, cov.effect.C,
-#'  cov.EC, cov.cor.EC, cov.effect.EC)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -34,10 +33,6 @@
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
 #' covariate for treatment and concurrent control group in the current trial,
 #' specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
-#' and concurrent control group in the current trial, specified as mean change
-#' per one unit increase in continuous covariates or as mean change between
-#' categories for binary covariates.
 #' @param cov.EC List of covariate distributions for external control. The
 #' continuous covariate is assumed to follow a normal distribution; for example,
 #' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -47,9 +42,9 @@
 #' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects on the outcome for external
-#' control, specified as mean change per one unit increase in continuous
-#' covariates or as mean change between categories for binary covariates.
+#' @param cov.effect Vector of covariate effects on the outcome, specified as
+#' mean change per one unit increase in continuous covariates or as mean change
+#' between categories for binary covariates.
 #' @details The continuous outcome is assumed to follow a normal distribution.
 #' Given more than one covariates with their effects on the outcome, a normal
 #' linear regression model is constructed for data generation. The data frame
@@ -67,9 +62,9 @@
 #' \item{y}{Continuous outcome}
 #' \item{column name specified}{Covariate of interest}
 #' @examples
-#' n.CT       <- 100
-#' n.CC       <- 50
-#' n.ECp      <- 1000
+#' n.CT  <- 100
+#' n.CC  <- 50
+#' n.ECp <- 1000
 #'
 #' out.mean.CT <- 0
 #' out.sd.CT   <- 1
@@ -84,34 +79,30 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.1,0.1)
-#'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.1,0.1)
+#' cov.effect <- c(0.1,0.1)
 #'
 #' trial.simulation.cont(
 #'   n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
 #'   out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
 #'   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
 #'   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
-#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#'   cov.C=cov.C, cov.cor.C=cov.cor.C,
+#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 #' @import stats
 #' @export
 
 trial.simulation.cont <- function(
     n.CT, n.CC, n.ECp,
     out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-    cov.C, cov.cor.C, cov.effect.C,
-    cov.EC, cov.cor.EC, cov.effect.EC)
+    cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 {
-  ncov        <- length(cov.C)
-  out.mean.EC <- driftdiff+out.mean.CC
+  ncov <- length(cov.C)
 
   marg.C  <- NULL
   marg.EC <- NULL
@@ -139,8 +130,7 @@ trial.simulation.cont <- function(
     }
   }
 
-  int.C   <- out.mean.CC-sum(mean.C*cov.effect.C)
-  int.EC  <- out.mean.EC-sum(mean.EC*cov.effect.EC)
+  int.C   <- out.mean.CC-sum(mean.C*cov.effect)
   t.theta <- out.mean.CT-out.mean.CC
 
   cvec.C  <- cov.cor.C[lower.tri(cov.cor.C)]
@@ -150,9 +140,9 @@ trial.simulation.cont <- function(
   data.cov.CC  <- datagen(margdist=marg.C, corvec=cvec.C, nsim=n.CC)
   data.cov.ECp <- datagen(margdist=marg.EC,corvec=cvec.EC,nsim=n.ECp)
 
-  mu.CT  <- int.C +t.theta+apply(data.cov.CT, 1,function(x){sum(x*cov.effect.C)})
-  mu.CC  <- int.C         +apply(data.cov.CC, 1,function(x){sum(x*cov.effect.C)})
-  mu.ECp <- int.EC        +apply(data.cov.ECp,1,function(x){sum(x*cov.effect.EC)})
+  mu.CT  <- int.C+t.theta          +apply(data.cov.CT, 1,function(x){sum(x*cov.effect)})
+  mu.CC  <- int.C                  +apply(data.cov.CC, 1,function(x){sum(x*cov.effect)})
+  mu.ECp <- int.C        +driftdiff+apply(data.cov.ECp,1,function(x){sum(x*cov.effect)})
 
   data.CT  <- cbind(stats::rnorm(n.CT, mean=mu.CT, sd=out.sd.CT),data.cov.CT)
   data.CC  <- cbind(stats::rnorm(n.CC, mean=mu.CC, sd=out.sd.CC),data.cov.CC)

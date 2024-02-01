@@ -7,8 +7,7 @@
 #' trial.simulation.bin(
 #'  n.CT, n.CC, n.ECp,
 #'  out.prob.CT, out.prob.CC, driftOR,
-#'  cov.C, cov.cor.C, cov.effect.C,
-#'  cov.EC, cov.cor.EC, cov.effect.EC)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -30,10 +29,6 @@
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
 #' covariate for treatment and concurrent control in the current trial,
 #' specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
-#' and concurrent control group in the current trial, specified as odds ratio
-#' per one unit increase in continuous covariates or as odds ratio between
-#' categories for binary covariates.
 #' @param cov.EC List of covariate distributions for external control. The
 #' continuous covariate is assumed to follow a normal distribution; for example,
 #' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -43,9 +38,9 @@
 #' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects on the outcome for external
-#' control, specified as odds ratio per one unit increase in continuous
-#' covariates or as odds ratio between categories for binary covariates.
+#' @param cov.effect Vector of covariate effects on the outcome, specified as
+#' odds ratio per one unit increase in continuous covariates or as odds ratio
+#' between categories for binary covariates.
 #' @details The binary outcome is assumed to follow a binomial distribution.
 #' Given more than one covariates with their effects on the outcome, a logistic
 #' regression model is constructed for data generation. The data frame
@@ -63,9 +58,9 @@
 #' \item{y}{Binary outcome}
 #' \item{column name specified}{Covariate of interest}
 #' @examples
-#' n.CT       <- 100
-#' n.CC       <- 50
-#' n.ECp      <- 1000
+#' n.CT  <- 100
+#' n.CC  <- 50
+#' n.ECp <- 1000
 #'
 #' out.prob.CT <- 0.2
 #' out.prob.CC <- 0.2
@@ -77,35 +72,29 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.8,0.8)
-#'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.8,0.8)
+#' cov.effect <- c(0.8,0.8)
 #'
 #' trial.simulation.bin(
 #'    n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
 #'    out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
-#'    cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+#'    cov.C=cov.C, cov.cor.C=cov.cor.C,
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 #' @import boot stats
 #' @export
 
 trial.simulation.bin <- function(
   n.CT, n.CC, n.ECp,
   out.prob.CT, out.prob.CC, driftOR,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.EC, cov.cor.EC, cov.effect.EC)
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
 {
   ncov        <- length(cov.C)
-  out.prob.EC <- (driftOR*out.prob.CC/(1-out.prob.CC))/(1+driftOR*out.prob.CC/(1-out.prob.CC))
-
-  lcov.effect.C  <- log(cov.effect.C)
-  lcov.effect.EC <- log(cov.effect.EC)
+  lcov.effect <- log(cov.effect)
 
   marg.C  <- NULL
   marg.EC <- NULL
@@ -133,8 +122,7 @@ trial.simulation.bin <- function(
     }
   }
 
-  int.C   <- log(out.prob.CC/(1-out.prob.CC))-sum(mean.C*lcov.effect.C)
-  int.EC  <- log(out.prob.EC/(1-out.prob.EC))-sum(mean.EC*lcov.effect.EC)
+  int.C   <- log(out.prob.CC/(1-out.prob.CC))-sum(mean.C*lcov.effect)
   t.theta <- log(out.prob.CT/(1-out.prob.CT))-log(out.prob.CC/(1-out.prob.CC))
 
   cvec.C  <- cov.cor.C[lower.tri(cov.cor.C)]
@@ -144,9 +132,9 @@ trial.simulation.bin <- function(
   data.cov.CC  <- datagen(margdist=marg.C, corvec=cvec.C, nsim=n.CC)
   data.cov.ECp <- datagen(margdist=marg.EC,corvec=cvec.EC,nsim=n.ECp)
 
-  p.CT  <- boot::inv.logit(int.C +t.theta+apply(data.cov.CT, 1,function(x){sum(x*lcov.effect.C)}))
-  p.CC  <- boot::inv.logit(int.C         +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect.C)}))
-  p.ECp <- boot::inv.logit(int.EC        +apply(data.cov.ECp,1,function(x){sum(x*lcov.effect.EC)}))
+  p.CT  <- boot::inv.logit(int.C+t.theta             +apply(data.cov.CT, 1,function(x){sum(x*lcov.effect)}))
+  p.CC  <- boot::inv.logit(int.C                     +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect)}))
+  p.ECp <- boot::inv.logit(int.C        +log(driftOR)+apply(data.cov.ECp,1,function(x){sum(x*lcov.effect)}))
 
   data.CT  <- cbind(stats::rbinom(n.CT, 1,p.CT), data.cov.CT)
   data.CC  <- cbind(stats::rbinom(n.CC, 1,p.CC), data.cov.CC)

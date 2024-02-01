@@ -12,8 +12,7 @@
 #' psborrow.cont(
 #'   n.CT, n.CC, n.ECp, n.EC,
 #'   out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-#'   cov.C, cov.cor.C, cov.effect.C,
-#'   cov.EC, cov.cor.EC, cov.effect.EC,
+#'   cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
 #'   psmatch.cov,
 #'   method.psest="glm", method.pslink="logit",
 #'   method.whomatch, method.matching, method.psorder, n.boot=100,
@@ -47,10 +46,6 @@
 #' @param cov.cor.C Matrix of correlation coefficients for each pair of
 #' covariate for treatment and concurrent control group in the current trial,
 #' specified as Gaussian copula parameter.
-#' @param cov.effect.C Vector of covariate effects on the outcome for treatment
-#' and concurrent control group in the current trial, specified as mean change
-#' per one unit increase in continuous covariates or as mean change between
-#' categories for binary covariates.
 #' @param cov.EC List of covariate distributions for external control. The
 #' continuous covariate is assumed to follow a normal distribution; for example,
 #' specified as \code{list(dist="norm", mean=0, sd=1, lab="cov1")}. The binary
@@ -60,9 +55,9 @@
 #' consistent with those used for \code{cov.C}.
 #' @param cov.cor.EC Matrix of correlation coefficients for each pair of
 #' covariate for external control, specified as Gaussian copula parameter.
-#' @param cov.effect.EC Vector of covariate effects on the outcome for external
-#' control, specified as mean change per one unit increase in continuous
-#' covariates or as mean change between categories for binary covariates.
+#' @param cov.effect Vector of covariate effects on the outcome, specified as
+#' mean change per one unit increase in continuous covariates or as mean change
+#' between categories for binary covariates.
 #' @param psmatch.cov Vector of names of covariates which are used for the
 #' propensity score matching. The names of covariates must be included in
 #' \code{lab} values specified in \code{cov.C}.
@@ -168,10 +163,10 @@
 #' \item{method.psorder}{Order that the matching takes place when a nearest
 #' neighbor matching is used.}
 #' @examples
-#' n.CT       <- 100
-#' n.CC       <- 50
-#' n.ECp      <- 200
-#' n.EC       <- 50
+#' n.CT  <- 100
+#' n.CC  <- 50
+#' n.ECp <- 200
+#' n.EC  <- 50
 #'
 #' out.mean.CT <- 0
 #' out.sd.CT   <- 1
@@ -186,15 +181,13 @@
 #' cov.cor.C <- rbind(c(  1,0.1),
 #'                    c(0.1,  1))
 #'
-#' cov.effect.C <- c(0.1,0.1)
-#'
 #' cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 #'                list(dist="binom",prob=0.4,lab="cov2"))
 #'
 #' cov.cor.EC <- rbind(c(  1,0.1),
 #'                     c(0.1,  1))
 #'
-#' cov.effect.EC <- c(0.1,0.1)
+#' cov.effect <- c(0.1,0.1)
 #'
 #' psmatch.cov <- c("cov1","cov2")
 #'
@@ -214,8 +207,8 @@
 #'   out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
 #'   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
 #'   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
-#'   cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC,
+#'   cov.C=cov.C, cov.cor.C=cov.cor.C,
+#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect,
 #'   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
 #'   method.matching=method.matching, method.psorder=method.psorder,
 #'   analysis.cov=analysis.cov, method.borrow=method.borrow,
@@ -225,8 +218,7 @@
 psborrow.cont <- function(
   n.CT, n.CC, n.ECp, n.EC,
   out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-  cov.C, cov.cor.C, cov.effect.C,
-  cov.EC, cov.cor.EC, cov.effect.EC,
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
   psmatch.cov,
   method.psest="glm", method.pslink="logit",
   method.whomatch, method.matching, method.psorder, n.boot=100,
@@ -248,8 +240,8 @@ psborrow.cont <- function(
       out.mean.CT=out.mean.CT, out.sd.CT=out.sd.CT,
       out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
       driftdiff=driftdiff, out.sd.EC=out.sd.EC,
-      cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-      cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+      cov.C=cov.C, cov.cor.C=cov.cor.C,
+      cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 
     f1 <- stats::as.formula(paste("study~",paste(psmatch.cov,collapse="+"),sep=""))
 
