@@ -2,8 +2,9 @@
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
+#' @docType package
 #' @name psBayesborrow-package
-#' @aliases psBayesborrow-package
+#' @aliases psBayesborrow
 #' @useDynLib psBayesborrow, .registration = TRUE
 #' @import methods
 #' @import Rcpp
