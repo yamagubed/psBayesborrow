@@ -7,7 +7,8 @@
 #' trial.simulation.cont(
 #'  n.CT, n.CC, n.ECp,
 #'  out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+#'  seed=sample.int(.Machine$integer.max,1))
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -45,6 +46,7 @@
 #' @param cov.effect Vector of covariate effects on the outcome, specified as
 #' mean change per one unit increase in continuous covariates or as mean change
 #' between categories for binary covariates.
+#' @param seed Setting a seed.
 #' @details The continuous outcome is assumed to follow a normal distribution.
 #' Given more than one covariates with their effects on the outcome, a normal
 #' linear regression model is constructed for data generation. The data frame
@@ -93,15 +95,18 @@
 #'   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
 #'   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
 #'   cov.C=cov.C, cov.cor.C=cov.cor.C,
-#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
+#'   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect, seed=100)
 #' @import stats
 #' @export
 
 trial.simulation.cont <- function(
     n.CT, n.CC, n.ECp,
     out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
-    cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+    cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+    seed=sample.int(.Machine$integer.max,1))
 {
+  set.seed(seed)
+
   ncov <- length(cov.C)
 
   marg.C  <- NULL

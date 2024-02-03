@@ -7,7 +7,8 @@
 #' trial.simulation.bin(
 #'  n.CT, n.CC, n.ECp,
 #'  out.prob.CT, out.prob.CC, driftOR,
-#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+#'  seed=sample.int(.Machine$integer.max,1))
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -41,6 +42,7 @@
 #' @param cov.effect Vector of covariate effects on the outcome, specified as
 #' odds ratio per one unit increase in continuous covariates or as odds ratio
 #' between categories for binary covariates.
+#' @param seed Setting a seed.
 #' @details The binary outcome is assumed to follow a binomial distribution.
 #' Given more than one covariates with their effects on the outcome, a logistic
 #' regression model is constructed for data generation. The data frame
@@ -84,15 +86,18 @@
 #'    n.CT=n.CT, n.CC=n.CC, n.ECp=n.ECp,
 #'    out.prob.CT=out.prob.CT, out.prob.CC=out.prob.CC, driftOR=driftOR,
 #'    cov.C=cov.C, cov.cor.C=cov.cor.C,
-#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect, seed=100)
 #' @import boot stats
 #' @export
 
 trial.simulation.bin <- function(
   n.CT, n.CC, n.ECp,
   out.prob.CT, out.prob.CC, driftOR,
-  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+  seed=sample.int(.Machine$integer.max,1))
 {
+  set.seed(seed)
+
   ncov        <- length(cov.C)
   lcov.effect <- log(cov.effect)
 

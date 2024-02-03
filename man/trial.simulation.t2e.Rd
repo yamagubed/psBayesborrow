@@ -7,7 +7,8 @@
 trial.simulation.t2e(
  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
  out.mevent.CT, out.mevent.CC, driftHR,
- cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+ cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+ seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
 \item{n.CT}{Number of patients in treatment group in the current trial.}
@@ -61,6 +62,8 @@ covariate for external control, specified as Gaussian copula parameter.}
 \item{cov.effect}{Vector of covariate effects on the outcome , specified as
 hazard ratio per one unit increase in continuous covariates or as hazard
 ratio between categories for binary covariates.}
+
+\item{seed}{Setting a seed.}
 }
 \value{
 The \code{trial.simulation.t2e} returns a data frame containing the
@@ -118,5 +121,5 @@ trial.simulation.t2e(
    n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
    out.mevent.CT, out.mevent.CC, driftHR,
    cov.C=cov.C, cov.cor.C=cov.cor.C,
-   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
+   cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect, seed=100)
 }

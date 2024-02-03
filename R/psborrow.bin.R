@@ -18,8 +18,7 @@
 #'   method.whomatch, method.matching, method.psorder, n.boot=100,
 #'   analysis.cov, method.borrow,
 #'   chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-#'   alternative="greater", sig.level=0.025,
-#'   nsim, seed=sample.int(.Machine$integer.max,1))
+#'   alternative="greater", sig.level=0.025, nsim)
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -128,7 +127,6 @@
 #' @param sig.level Significance level. The default value is
 #' \code{sig.level=0.025}.
 #' @param nsim Number of simulated trials.
-#' @param seed Setting a seed.
 #' @details The simulation study consists of three part: data generation
 #' conducted by \code{trial.simulation.bin} function, propensity score matching
 #' conducted by \code{psmatch} function, and Bayesian analysis with commensurate
@@ -203,7 +201,7 @@
 #'   psmatch.cov=psmatch.cov, method.whomatch=method.whomatch,
 #'   method.matching=method.matching, method.psorder=method.psorder,
 #'   analysis.cov=analysis.cov, method.borrow=method.borrow,
-#'   chains=1, iter=100, nsim=nsim, seed=100)
+#'   chains=1, iter=100, nsim=nsim)
 #' @import overlapping stats
 #' @export
 
@@ -216,14 +214,11 @@ psborrow.bin <- function(
     method.whomatch, method.matching, method.psorder, n.boot=100,
     analysis.cov, method.borrow,
     chains=2, iter=4000, warmup=floor(iter/2), thin=1,
-    alternative="greater", sig.level=0.025,
-    nsim, seed=sample.int(.Machine$integer.max,1))
+    alternative="greater", sig.level=0.025, nsim)
 {
   reject <- NULL
   theta  <- NULL
   ov     <- NULL
-
-  set.seed(seed)
 
   for(ss in 1:nsim){
 

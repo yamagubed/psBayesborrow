@@ -7,7 +7,8 @@
 trial.simulation.cont(
  n.CT, n.CC, n.ECp,
  out.mean.CT, out.sd.CT, out.mean.CC, out.sd.CC, driftdiff, out.sd.EC,
- cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+ cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+ seed=sample.int(.Machine$integer.max,1))
 }
 \arguments{
 \item{n.CT}{Number of patients in treatment group in the current trial.}
@@ -60,6 +61,8 @@ covariate for external control, specified as Gaussian copula parameter.}
 \item{cov.effect}{Vector of covariate effects on the outcome, specified as
 mean change per one unit increase in continuous covariates or as mean change
 between categories for binary covariates.}
+
+\item{seed}{Setting a seed.}
 }
 \value{
 The \code{trial.simulation.cont} returns a data frame containing the
@@ -116,5 +119,5 @@ trial.simulation.cont(
   out.mean.CC=out.mean.CC, out.sd.CC=out.sd.CC,
   driftdiff=driftdiff, out.sd.EC=out.sd.EC,
   cov.C=cov.C, cov.cor.C=cov.cor.C,
-  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
+  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect, seed=100)
 }

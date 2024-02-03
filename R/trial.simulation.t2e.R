@@ -7,7 +7,8 @@
 #' trial.simulation.t2e(
 #'  n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
 #'  out.mevent.CT, out.mevent.CC, driftHR,
-#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+#'  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+#'  seed=sample.int(.Machine$integer.max,1))
 #' @param n.CT Number of patients in treatment group in the current trial.
 #' @param n.CC Number of patients in concurrent control group in the current
 #' trial.
@@ -46,6 +47,7 @@
 #' @param cov.effect Vector of covariate effects on the outcome , specified as
 #' hazard ratio per one unit increase in continuous covariates or as hazard
 #' ratio between categories for binary covariates.
+#' @param seed Setting a seed.
 #' @details The time to event outcome is assumed to follow a Weibull
 #' distribution. Given more than one covariates with their effects on the
 #' outcome, a Weibull proportional hazards model is constructed for data
@@ -95,15 +97,18 @@
 #'    n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
 #'    out.mevent.CT, out.mevent.CC, driftHR,
 #'    cov.C=cov.C, cov.cor.C=cov.cor.C,
-#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
+#'    cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect, seed=100)
 #' @import stats
 #' @export
 
 trial.simulation.t2e <- function(
   n.CT, n.CC, nevent.C, n.ECp, nevent.ECp, accrual,
   out.mevent.CT, out.mevent.CC, driftHR,
-  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect)
+  cov.C, cov.cor.C, cov.EC, cov.cor.EC, cov.effect,
+  seed=sample.int(.Machine$integer.max,1))
 {
+  set.seed(seed)
+
   ncov          <- length(cov.C)
   out.lambda.CT <- log(2)/out.mevent.CT
   out.lambda.CC <- log(2)/out.mevent.CC
