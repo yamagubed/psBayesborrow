@@ -140,22 +140,20 @@ cov.C <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
 cov.cor.C <- rbind(c(  1,0.1),
                    c(0.1,  1))
 
-cov.effect.C <- c(0.1,0.1)
-
 cov.EC <- list(list(dist="norm",mean=0,sd=1,lab="cov1"),
                list(dist="binom",prob=0.4,lab="cov2"))
 
 cov.cor.EC <- rbind(c(  1,0.1),
                     c(0.1,  1))
 
-cov.effect.EC <- c(0.1,0.1)
+cov.effect <- c(0.1,0.1)
 
 indata <- trial.simulation.t2e(
   n.CT=n.CT, n.CC=n.CC, nevent.C=nevent.C,
   n.ECp=n.ECp, nevent.ECp=nevent.ECp, accrual=accrual,
   out.mevent.CT, out.mevent.CC, driftHR,
-  cov.C=cov.C, cov.cor.C=cov.cor.C, cov.effect.C=cov.effect.C,
-  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect.EC=cov.effect.EC)
+  cov.C=cov.C, cov.cor.C=cov.cor.C,
+  cov.EC=cov.EC, cov.cor.EC=cov.cor.EC, cov.effect=cov.effect)
 
 n.EC <- 50
 
