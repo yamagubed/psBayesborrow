@@ -29,7 +29,6 @@ Imports:
     rstantools (>= 2.2.0),
     boot,
     MatchIt,
-    dplyr,
     optmatch,
     survival,
     e1071,

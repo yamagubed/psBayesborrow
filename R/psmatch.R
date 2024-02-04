@@ -149,7 +149,6 @@
 #'   method.psorder=method.psorder)
 #' @import MatchIt e1071 stats
 #' @rawNamespace import(optmatch,except=strata)
-#' @rawNamespace import(dplyr,except=c(lag,filter))
 #' @export
 
 psmatch <- function(
@@ -197,13 +196,19 @@ psmatch <- function(
       wk.n1 <- floor(n.C/n.EC)
       wk.n2 <- n.C-wk.n1*n.EC
       wk.n3 <- sample(n.EC,wk.n2)
-      wk.n4 <- data.frame(X1=1:n.EC,X2=wk.n1)
-      wk.n4[wk.n3,"X2"] <- wk.n1+1
-      wk.n5 <- wk.n4 %>% mutate(en=cumsum(X2))
-      wk.n6 <- data.frame(wk.n5,st=c(1,wk.n5$en[-n.EC]+1))
+      wk.n4 <- matrix(c(1:n.EC,rep(wk.n1,n.EC)),n.EC,2)
+      wk.n4[wk.n3,2] <- wk.n1+1
+
+      en  <- NULL
+      tmp <- 0
+      for(i in 1:n.EC){
+        en  <- c(en,wk.n4[i,2]+tmp)
+        tmp <- tmp+wk.n4[i,2]
+      }
+      st <- c(1,en[-n.EC]+1)
 
       wk.ps1 <- sort(invet.ps)
-      wk.ps2 <- apply(as.matrix(1:n.EC),1,function(x){stats::median(wk.ps1[wk.n6$st[x]:wk.n6$en[x]])})
+      wk.ps2 <- apply(as.matrix(1:n.EC),1,function(x){stats::median(wk.ps1[st[x]:en[x]])})
 
       return(wk.ps2)
     }

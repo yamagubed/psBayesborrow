@@ -6,40 +6,44 @@
 #' psborrow.summary(object)
 #' @param object List of simulation results.
 #' @import stats
-#' @rawNamespace import(dplyr,except=c(lag,filter))
 #' @export
 psborrow.summary <- function(object)
 {
   reject  <- object$reject
   theta   <- object$theta
-  colflg  <- object$method.borrow
+  colflg  <- colnames(object$reject)[-c(1,2)]
   t.theta <- object$true.theta
 
   rrate    <- apply(reject[,colflg],2,mean)
   bias     <- apply(theta[theta$measure=="mean",colflg]-t.theta,2,mean)
   empsd    <- apply(theta[theta$measure=="mean",colflg],2,stats::sd)
   modsd    <- apply(theta[theta$measure=="sd",colflg],2,mean)
-  empmodsd <- empsd/modsd
+  modempsd <- modsd/empsd
   covprob  <- apply((theta[theta$measure=="lcri",colflg]<t.theta)*(theta[theta$measure=="ucri",colflg]>t.theta),2,mean)
 
-  res.out <- data.frame(measure=c("Reject","Bias","EmpSD","ModSD","EmpSD/ModSD","Coverage Prob."),
-                        round(rbind(rrate,bias,empsd,modsd,empmodsd,covprob),digits=3))
+  res.out <- data.frame(measure=c("Reject","Bias","EmpSD","ModSD","ModSD/EmpSD","Coverage Prob."),
+                        round(rbind(rrate,bias,empsd,modsd,modempsd,covprob),digits=3))
 
   colnames(res.out) <- c("measure",colflg)
   rownames(res.out) <- NULL
 
   ov <- object$ov
 
-  sum.ov <- ov %>%
-            group_by(factor,type) %>%
-            summarise_at(vars(ov),c(mean,median,sd),na.rm=TRUE)
+  ov.ft   <- unique(ov[,c("factor","type","comparison")])
+  l.ov.ft <- nrow(ov.ft)
+  res.cov <- NULL
+  for(i in 1:l.ov.ft){
+    anaflg <- (ov$factor==ov.ft$factor[i])&(ov$type==ov.ft$type[i])&(ov$comparison==ov.ft$comparison[i])
 
-  res.cov <- data.frame(
-               factor = sum.ov$factor,
-               type   = sum.ov$type,
-               mean   = round(sum.ov$fn1,digits=3),
-               median = round(sum.ov$fn2,digits=3),
-               sd     = round(sum.ov$fn3,digits=3))
+    res.cov <- rbind(res.cov,data.frame(
+                       factor     = ov.ft$factor[i],
+                       type       = ov.ft$type[i],
+                       comparison = ov.ft$comparison[i],
+                       mean       = round(mean(ov[anaflg,"ov"]),digits=3),
+                       median     = round(stats::median(ov[anaflg,"ov"]),digits=3),
+                       sd         = round(stats::sd(ov[anaflg,"ov"]),digits=3)
+                    ))
+  }
 
   result <- list(res.out         = res.out,
                  res.cov         = res.cov,
