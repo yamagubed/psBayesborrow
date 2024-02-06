@@ -1,3 +1,3 @@
-# psBayesborrow (development version)
+# psBayesborrow 1.0.0
 
 * Initial CRAN submission.
