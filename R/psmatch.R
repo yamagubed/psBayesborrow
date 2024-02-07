@@ -104,6 +104,24 @@
 #' The \code{psmatch} returns a list containing the following objects:
 #' \item{subjid.EC}{Vector of subject ID of external control.}
 #' \item{data.ps}{Data frame with estimated propensity score.}
+#' @references
+#' Austin PC. A comparison of 12 algorithms for matching on the propensity
+#' score. *Statistics in Medicine* 2014; 33:1057-1069.
+#'
+#' Lin J, Gamalo-Siebers M, Tiwari R. Propensity score matched augmented
+#' controls in randomized clinical trials: A case study.
+#' *Pharmaceutical Statistics* 2018; 17:629-647.
+#'
+#' Lin J, Gamalo-Siebers M, Tiwari R. Propensity-score-based priors for
+#' Bayesian augmented control design. *Pharmaceutical Statistics* 2019;
+#' 18:223-238.
+#'
+#' Rosenbaum PR. Optimal matching for observational studies.
+#' *Journal of the American Statistical Association* 1989; 84:1024-1032.
+#'
+#' Sawamoto R, Oba K, Matsuyama Y. Bayesian adaptive randomization design
+#' incorporating propensity score-matched historical controls.
+#' *Pharmaceutical Statistics* 2022; 21:1074-1089.
 #' @examples
 #' n.CT       <- 100
 #' n.CC       <- 50

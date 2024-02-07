@@ -62,6 +62,14 @@
 #' \item{theta}{Data frame containing posterior mean, median, and sd of log
 #' odds ratio.}
 #' \item{stan.obj}{Stanfit object.}
+#' @references
+#' Hobbs BP, Carlin BP, Mandrekar SJ, Sargent DJ. Hierarchical commensurate and
+#' power prior models for adaptive incorporation of historical information in
+#' clinical trials. *Biometrics* 2011; 67:1047-1056.
+#'
+#' Hobbs BP, Sargent DJ, Carlin BP. Commensurate priors for incorporating
+#' historical information in clinical trials using general and generalized
+#' linear models. *Bayesian Analysis* 2012; 7:639-674.
 #' @examples
 #' n.CT  <- 100
 #' n.CC  <- 50

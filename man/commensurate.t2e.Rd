@@ -135,3 +135,12 @@ commensurate.t2e(
   survival::Surv(time,status)~cov1+cov2,data=indata.match,
   method.borrow=method.borrow,chains=1,iter=100)
 }
+\references{
+Hobbs BP, Carlin BP, Mandrekar SJ, Sargent DJ. Hierarchical commensurate and
+power prior models for adaptive incorporation of historical information in
+clinical trials. \emph{Biometrics} 2011; 67:1047-1056.
+
+Hobbs BP, Sargent DJ, Carlin BP. Commensurate priors for incorporating
+historical information in clinical trials using general and generalized
+linear models. \emph{Bayesian Analysis} 2012; 7:639-674.
+}

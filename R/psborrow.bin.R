@@ -141,8 +141,14 @@
 #' when significant, otherwise \code{FALSE}.}
 #' \item{theta}{Data frame containing posterior mean, median, and sd of log
 #' odds ratio.}
-#' \item{ov}{Data frame containing overlapping coefficient of propensity score
-#' densities between treatment versus concurrent control plus external control}
+#' \item{ov}{Data frame containing (1) overlapping coefficient of propensity
+#' score densities between treatment versus concurrent control plus external
+#' control and between concurrent control versus external control, (2)
+#' overlapping coefficient of continuous covariate densities between treatment
+#' versus concurrent control plus external control and between concurrent
+#' control versus external control, and (3) rate difference of binary covariate
+#' between treatment versus concurrent control plus external control and
+#' between concurrent control versus external control.}
 #' \item{n.CT}{Number of patients in treatment group in the current trial.}
 #' \item{n.CC}{Number of patients in concurrent control group in the current
 #' trial.}

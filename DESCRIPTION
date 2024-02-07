@@ -1,6 +1,6 @@
 Package: psBayesborrow
 Version: 1.0.0
-Title: Hybrid Control Design with Commensurate Prior Constructed using Propensity Score-Matched External Controls
+Title: Bayesian Information Borrowing with Propensity Score Matching
 Authors@R: c(
     person(given  = "Yusuke",
            family = "Yamaguchi",

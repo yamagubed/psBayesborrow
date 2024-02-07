@@ -5,6 +5,41 @@
 #' @usage
 #' psborrow.summary(object)
 #' @param object List of simulation results.
+#' @return
+#' The \code{psborrow.summary} returns a list containing the following objects:
+#' \item{res.out}{Data frame containing (1) rate that the null hypothesis is
+#' rejected in Bayesian one-sided hypothesis testing, (2) bias in posterior mean
+#' of treatment effect (log hazard ratio, log odds ratio, or mean difference),
+#' (3) empirical standard deviation (\code{EmpSD}), derived by taking the
+#' standard deviation of posterior mean of treatment effect that each simulated
+#' trial yielded, (4) model standard deviation ((\code{ModSD})), derived by
+#' taking the average of posterior standard deviation of treatment effect that
+#' each simulated trial yielded, (5) ratio of \code{ModSD} to \code{EmpSD},
+#' (6) Coverage probability of credible interval.}
+#' \item{res.cov}{Data frame containing (1) mean, median, and standard deviation
+#' of overlapping coefficients of propensity score densities between treatment
+#' versus concurrent control plus external control and between concurrent
+#' control versus external control, (2) mean, median, and standard deviation
+#' of overlapping coefficients of continuous covariate densities between treatment
+#' versus concurrent control plus external control and between concurrent
+#' control versus external control, and (3) mean, median, and standard deviation
+#' of rate differences of binary covariate between treatment versus concurrent
+#' control plus external control and between concurrent control versus external
+#' control.}
+#' \item{n.CT}{Number of patients in treatment group in the current trial.}
+#' \item{n.CC}{Number of patients in concurrent control group in the current
+#' trial.}
+#' \item{n.ECp}{Number of patients in external control pool.}
+#' \item{n.EC}{Number of patients in external control.}
+#' \item{drift}{Hazard ratio, odds ratio, or mean difference between concurrent
+#' and external control for which the bias should be plotted. The measure
+#' depends on the outcome type.}
+#' \item{method.psest}{Method of estimating the propensity score.}
+#' \item{method.pslink}{Link function used in estimating the propensity score.}
+#' \item{method.whomatch}{Options of who to match.}
+#' \item{method.matching}{Matching method.}
+#' \item{method.psorder}{Order that the matching takes place when a nearest
+#' neighbor matching is used.}
 #' @import stats
 #' @export
 psborrow.summary <- function(object)

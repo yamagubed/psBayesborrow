@@ -166,3 +166,22 @@ psmatch(
   method.whomatch=method.whomatch, method.matching=method.matching,
   method.psorder=method.psorder)
 }
+\references{
+Austin PC. A comparison of 12 algorithms for matching on the propensity
+score. \emph{Statistics in Medicine} 2014; 33:1057-1069.
+
+Lin J, Gamalo-Siebers M, Tiwari R. Propensity score matched augmented
+controls in randomized clinical trials: A case study.
+\emph{Pharmaceutical Statistics} 2018; 17:629-647.
+
+Lin J, Gamalo-Siebers M, Tiwari R. Propensity-score-based priors for
+Bayesian augmented control design. \emph{Pharmaceutical Statistics} 2019;
+18:223-238.
+
+Rosenbaum PR. Optimal matching for observational studies.
+\emph{Journal of the American Statistical Association} 1989; 84:1024-1032.
+
+Sawamoto R, Oba K, Matsuyama Y. Bayesian adaptive randomization design
+incorporating propensity score-matched historical controls.
+\emph{Pharmaceutical Statistics} 2022; 21:1074-1089.
+}
