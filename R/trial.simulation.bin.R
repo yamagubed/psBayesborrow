@@ -18,7 +18,8 @@
 #' @param out.prob.CC True rate of outcome in concurrent control group in the
 #' current trial.
 #' @param driftOR Odds ratio between concurrent and external control
-#' for which the bias should be plotted.
+#' for which the bias should be plotted (odds in external control divided by
+#' odds in concurrent control).
 #' @param cov.C List of covariate distributions for treatment and concurrent
 #' control group in the current trial. Continuous and binary covariate are
 #' applicable. The continuous covariate is assumed to follow a normal

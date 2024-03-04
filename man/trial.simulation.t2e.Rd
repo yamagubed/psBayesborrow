@@ -33,7 +33,8 @@ current trial.}
 in the current trial.}
 
 \item{driftHR}{Hazard ratio between concurrent and external control for
-which the bias should be plotted.}
+which the bias should be plotted (hazard in external control divided by
+hazard in concurrent control).}
 
 \item{cov.C}{List of covariate distributions for treatment and concurrent
 control group in the current trial. Continuous and binary covariate are

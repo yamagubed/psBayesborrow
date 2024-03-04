@@ -23,7 +23,8 @@
 #' @param out.mevent.CC True median time to event in concurrent control group
 #' in the current trial.
 #' @param driftHR Hazard ratio between concurrent and external control for
-#' which the bias should be plotted.
+#' which the bias should be plotted (hazard in external control divided by
+#' hazard in concurrent control).
 #' @param cov.C List of covariate distributions for treatment and concurrent
 #' control group in the current trial. Continuous and binary covariate are
 #' applicable. The continuous covariate is assumed to follow a normal
@@ -153,7 +154,7 @@ trial.simulation.t2e <- function(
 
   sigma.CT  <- exp(int.C+t.theta             +apply(data.cov.CT, 1,function(x){sum(x*lcov.effect)}))
   sigma.CC  <- exp(int.C                     +apply(data.cov.CC, 1,function(x){sum(x*lcov.effect)}))
-  sigma.ECp <- exp(int.C        +log(driftHR)+apply(data.cov.ECp,1,function(x){sum(x*lcov.effect)}))
+  sigma.ECp <- exp(int.C        -log(driftHR)+apply(data.cov.ECp,1,function(x){sum(x*lcov.effect)}))
 
   data.CT  <- cbind(stats::rweibull(n.CT, shape=1,scale=sigma.CT), data.cov.CT)
   data.CC  <- cbind(stats::rweibull(n.CC, shape=1,scale=sigma.CC), data.cov.CC)

@@ -16,8 +16,8 @@ Stan Development Team (NA). RStan: the R interface to Stan. R package version 2.
 
 Authors:
 \itemize{
-  \item Kentaro Takeda
   \item Jun Takeda
+  \item Kentaro Takeda
 }
 
 }

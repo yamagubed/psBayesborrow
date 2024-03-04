@@ -25,7 +25,8 @@ trial.}
 current trial.}
 
 \item{driftOR}{Odds ratio between concurrent and external control
-for which the bias should be plotted.}
+for which the bias should be plotted (odds in external control divided by
+odds in concurrent control).}
 
 \item{cov.C}{List of covariate distributions for treatment and concurrent
 control group in the current trial. Continuous and binary covariate are

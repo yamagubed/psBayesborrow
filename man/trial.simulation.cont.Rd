@@ -30,7 +30,8 @@ current trial.}
 current trial.}
 
 \item{driftdiff}{Mean difference between concurrent and external control
-for which the bias should be plotted.}
+for which the bias should be plotted (mean in external control minus mean
+in concurrent control).}
 
 \item{out.sd.EC}{True sd of outcome in external control.}
 
