@@ -1,5 +1,5 @@
 Package: psBayesborrow
-Version: 1.1.0
+Version: 1.2.0
 Title: Bayesian Information Borrowing with Propensity Score Matching
 Authors@R: c(
     person(given  = "Yusuke",

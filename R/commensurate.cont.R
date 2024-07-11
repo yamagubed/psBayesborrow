@@ -148,9 +148,9 @@ commensurate.cont <- function(
                            treat  = data$treat,
                            data[,cov.lab,drop=FALSE])
 
-    data.CT <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab)]
-    data.CC <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab)]
-    data.EC <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab)]
+    data.CT <- data.out[(data.out$study==1)&(data.out$treat==1),c("y",cov.lab),drop=FALSE]
+    data.CC <- data.out[(data.out$study==1)&(data.out$treat==0),c("y",cov.lab),drop=FALSE]
+    data.EC <- data.out[(data.out$study==0)&(data.out$treat==0),c("y",cov.lab),drop=FALSE]
 
     nmethod    <- length(method.borrow)
     method.lab <- character(nmethod)
