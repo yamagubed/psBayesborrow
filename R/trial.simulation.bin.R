@@ -147,9 +147,9 @@ trial.simulation.bin <- function(
   data.ECp <- cbind(stats::rbinom(n.ECp,1,p.ECp),data.cov.ECp)
 
   outdata <- rbind(
-    data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1]),
-    data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1]),
-    data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1]))
+    data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1,drop=FALSE]),
+    data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1,drop=FALSE]),
+    data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1,drop=FALSE]))
 
   colnames(outdata) <- c("study","treat","y",cov.lab)
 

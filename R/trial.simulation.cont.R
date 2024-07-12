@@ -155,9 +155,9 @@ trial.simulation.cont <- function(
   data.ECp <- cbind(stats::rnorm(n.ECp,mean=mu.ECp,sd=out.sd.EC),data.cov.ECp)
 
   outdata <- rbind(
-    data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1]),
-    data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1]),
-    data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1]))
+    data.frame(study=1,treat=1,y=data.CT[,1], data.CT[,-1,drop=FALSE]),
+    data.frame(study=1,treat=0,y=data.CC[,1], data.CC[,-1,drop=FALSE]),
+    data.frame(study=0,treat=0,y=data.ECp[,1],data.ECp[,-1,drop=FALSE]))
 
   colnames(outdata) <- c("study","treat","y",cov.lab)
 

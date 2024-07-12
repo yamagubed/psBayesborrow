@@ -215,9 +215,9 @@ trial.simulation.t2e <- function(
   data.ECp   <- data.ECp[data.ECp[,1]>0,]
 
   outdata <- rbind(
-    data.frame(study=1,treat=1,time=data.CT[,1], status=1-censor.CT, data.CT[,-1]),
-    data.frame(study=1,treat=0,time=data.CC[,1], status=1-censor.CC, data.CC[,-1]),
-    data.frame(study=0,treat=0,time=data.ECp[,1],status=1-censor.ECp,data.ECp[,-1]))
+    data.frame(study=1,treat=1,time=data.CT[,1], status=1-censor.CT, data.CT[,-1,drop=FALSE]),
+    data.frame(study=1,treat=0,time=data.CC[,1], status=1-censor.CC, data.CC[,-1,drop=FALSE]),
+    data.frame(study=0,treat=0,time=data.ECp[,1],status=1-censor.ECp,data.ECp[,-1,drop=FALSE]))
 
   colnames(outdata) <- c("study","treat","time","status",cov.lab)
 
